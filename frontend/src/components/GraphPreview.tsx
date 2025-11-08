@@ -44,6 +44,7 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
 
   const handleResetZoom = () => {
     useCustomIntervals.current = true;
+    isZoomedMode.current = false;
     // Force complete chart re-render by updating key
     setResetKey(prev => prev + 1);
   };
@@ -51,40 +52,87 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
   // Reset to custom intervals whenever new data is loaded
   React.useEffect(() => {
     useCustomIntervals.current = true;
+    isZoomedMode.current = false;
     if (chartRef.current) {
       chartRef.current.update('none');
     }
   }, [baseline, samples, selectedSampleName]);
 
+  // Transform x-values to equal-spaced positions (similar to backend export)
+  const customXTicks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550];
+  const isZoomedMode = useRef(false);
+  
+  const mapXToPosition = (xValues: number[]) => {
+    return xValues.map(x => {
+      if (x >= 4000) return 0;
+      if (x <= 550) return customXTicks.length - 1;
+      
+      // Find which segment this x falls into
+      for (let i = 0; i < customXTicks.length - 1; i++) {
+        if (customXTicks[i] >= x && x >= customXTicks[i + 1]) {
+          const x1 = customXTicks[i];
+          const x2 = customXTicks[i + 1];
+          const t = (x - x1) / (x2 - x1);
+          return i + t;
+        }
+      }
+      return 0;
+    });
+  };
+
+  // Calculate dynamic y-axis max
+  const getYMax = () => {
+    if (!hasData) return 6;
+    const maxBaseline = Math.max(...baseline!.y);
+    const maxSample = Math.max(...sample.y);
+    return Math.max(maxBaseline, maxSample);
+  };
+
+  // Generate y-axis ticks: 0.2, 0.5, 1.0, 1.5, ..., max
+  const getYTicks = () => {
+    const yMax = getYMax();
+    const ticks = [0.2];
+    let current = 0.5;
+    while (current < yMax) {
+      ticks.push(current);
+      current += 0.5;
+    }
+    ticks.push(Math.round(yMax * 10) / 10); // Round max to 1 decimal
+    return ticks;
+  };
+
   // Create chart data with proper x-y coordinate pairs
   const data = hasData ? (() => {
-    // Create coordinate pairs for baseline
+    // Remove .csv extension from filenames
+    const baselineName = baseline!.filename.replace(/\.csv$/i, '');
+    const sampleName = sample.filename.replace(/\.csv$/i, '');
+    
+    // Always use actual x values for data, transformation happens at display level
     const baselineData = baseline!.x.map((x: number, i: number) => ({ x, y: baseline!.y[i] }));
-    // Create coordinate pairs for sample
     const sampleData = sample.x.map((x: number, i: number) => ({ x, y: sample.y[i] }));
     
     return {
       datasets: [
         {
-          label: `Baseline: ${baseline!.filename}`,
+          label: `Baseline: ${baselineName}`,
           data: baselineData,
           borderColor: 'rgb(0, 100, 0)', // Darker green - fully opaque
           backgroundColor: 'rgba(0,100,0,0.05)',
           tension: 0.2,
           pointRadius: 0,
           pointHoverRadius: 3,
-          borderWidth: 0.45, // Slightly thicker for visibility
+          borderWidth: 0.45,
           fill: false,
         },
         {
-          label: `Sample: ${sample.filename}`,
+          label: `Sample: ${sampleName}`,
           data: sampleData,
           borderColor: 'rgb(0, 0, 255)', // Darker blue - fully opaque
           backgroundColor: 'rgb(0, 0, 255)',
           tension: 0.2,
           pointRadius: 0,
           pointHoverRadius: 3,
-          borderWidth: 0.45, // Slightly thicker for visibility
+          borderWidth: 0.45,
           fill: false,
         }
       ]
@@ -126,8 +174,7 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                   max: 550,
                   reverse: true,
                   grid: {
-                    color: '#e0e0e0',
-                    lineWidth: 0.5
+                    display: false  // Remove grid lines
                   },
                   ticks: {
                     color: '#666',
@@ -135,20 +182,15 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                     autoSkip: true,
                     maxTicksLimit: 15,
                     callback: function(value) {
-                      // Round to whole numbers (no decimals)
                       const numValue = typeof value === 'number' ? value : parseFloat(value);
                       return Math.round(numValue);
                     }
                   },
-                  // Dynamically generate ticks based on zoom state
                   afterBuildTicks: (axis) => {
-                    if (useCustomIntervals.current) {
-                      // Default/Reset view: Mixed intervals (500 from 4000-2000, 250 from 2000-750, then 550)
-                      axis.ticks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550].map(value => ({ value }));
+                    if (useCustomIntervals.current && !isZoomedMode.current) {
+                      // Equal-spaced custom ticks for default view
+                      axis.ticks = customXTicks.map(value => ({ value }));
                     }
-                    // When zoomed (useCustomIntervals.current === false):
-                    // Let Chart.js auto-generate ticks with adaptive scaling
-                    // The callback above will ensure they're rounded to whole numbers
                   }
                 },
                 y: {
@@ -160,15 +202,20 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                     color: '#333'
                   },
                   min: 0.2,
-                  max: 6,
+                  max: getYMax(),
                   grid: {
-                    color: '#e0e0e0',
-                    lineWidth: 0.5
+                    display: false  // Remove grid lines
                   },
                   ticks: {
-                    maxTicksLimit: 8,
                     color: '#666',
-                    font: { size: 12 }
+                    font: { size: 12 },
+                    callback: function(value) {
+                      return typeof value === 'number' ? value.toFixed(1) : value;
+                    }
+                  },
+                  afterBuildTicks: (axis) => {
+                    // Set custom y-ticks
+                    axis.ticks = getYTicks().map(value => ({ value }));
                   }
                 }
               },
@@ -180,9 +227,22 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                     font: { size: 13, weight: 'bold' },
                     color: '#333',
                     usePointStyle: true,
+                    pointStyle: 'rect',  // Use rectangle (checkbox-like)
                     padding: 15,
-                    boxWidth: 15,
-                    boxHeight: 3
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    generateLabels: (chart) => {
+                      const datasets = chart.data.datasets;
+                      return datasets.map((dataset, i) => ({
+                        text: dataset.label || '',
+                        fillStyle: dataset.borderColor as string,
+                        strokeStyle: dataset.borderColor as string,
+                        lineWidth: 2,
+                        hidden: !chart.isDatasetVisible(i),
+                        datasetIndex: i,
+                        pointStyle: 'rectRounded' // Checkbox style
+                      }));
+                    }
                   }
                 },
                 zoom: {
@@ -194,19 +254,27 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                       enabled: true
                     },
                     mode: 'xy',
+                    onZoomStart: () => {
+                      // Mark as zoomed mode
+                      isZoomedMode.current = true;
+                      return true;
+                    },
                     onZoomComplete: ({ chart }) => {
-                      // Switch to uniform 250-unit intervals when zoomed
-                      useCustomIntervals.current = false;
-                      chart.update('none');
+                      // Stay in zoomed mode, don't re-render
+                      isZoomedMode.current = true;
                     }
                   },
                   pan: {
                     enabled: true,
                     mode: 'xy',
+                    onPanStart: () => {
+                      // Mark as zoomed mode
+                      isZoomedMode.current = true;
+                      return true;
+                    },
                     onPanComplete: ({ chart }) => {
-                      // Maintain 250-unit intervals during pan
-                      useCustomIntervals.current = false;
-                      chart.update('none');
+                      // Stay in zoomed mode
+                      isZoomedMode.current = true;
                     }
                   },
                   limits: {
