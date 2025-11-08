@@ -41,6 +41,8 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
   const useCustomIntervals = useRef(true);
   // Force re-render trigger
   const [resetKey, setResetKey] = React.useState(0);
+  // Track grid visibility
+  const [showGrid, setShowGrid] = React.useState(true);
 
   const handleResetZoom = () => {
     useCustomIntervals.current = true;
@@ -48,11 +50,16 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
     // Force complete chart re-render by updating key
     setResetKey(prev => prev + 1);
   };
+
+  const handleToggleGrid = () => {
+    setShowGrid(prev => !prev);
+  };
   
   // Reset to custom intervals whenever new data is loaded
   React.useEffect(() => {
     useCustomIntervals.current = true;
     isZoomedMode.current = false;
+    setShowGrid(true); // Reset grid to visible when new data loads
     if (chartRef.current) {
       chartRef.current.update('none');
     }
@@ -145,9 +152,14 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
         <HStack justify="space-between" w="100%">
           <Text fontWeight="bold">Real-time Preview</Text>
           {hasData && (
-            <Button size="sm" onClick={handleResetZoom} variant="outline">
-              Reset Zoom
-            </Button>
+            <HStack spacing={2}>
+              <Button size="sm" onClick={handleToggleGrid} variant="outline">
+                {showGrid ? 'Hide Grid' : 'Show Grid'}
+              </Button>
+              <Button size="sm" onClick={handleResetZoom} variant="outline">
+                Reset Zoom
+              </Button>
+            </HStack>
           )}
         </HStack>
 
@@ -174,7 +186,9 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                   max: 550,
                   reverse: true,
                   grid: {
-                    display: false  // Remove grid lines
+                    display: showGrid,  // Toggle grid lines
+                    color: '#e0e0e0',
+                    lineWidth: 0.5
                   },
                   ticks: {
                     color: '#666',
@@ -204,7 +218,9 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                   min: 0.2,
                   max: getYMax(),
                   grid: {
-                    display: false  // Remove grid lines
+                    display: showGrid,  // Toggle grid lines
+                    color: '#e0e0e0',
+                    lineWidth: 0.5
                   },
                   ticks: {
                     color: '#666',
@@ -226,22 +242,38 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                   labels: {
                     font: { size: 13, weight: 'bold' },
                     color: '#333',
-                    usePointStyle: true,
-                    pointStyle: 'rect',  // Use rectangle (checkbox-like)
+                    usePointStyle: false,  // Don't use point style, use box
                     padding: 15,
-                    boxWidth: 12,
-                    boxHeight: 12,
+                    boxWidth: 15,
+                    boxHeight: 15,
                     generateLabels: (chart) => {
                       const datasets = chart.data.datasets;
-                      return datasets.map((dataset, i) => ({
-                        text: dataset.label || '',
-                        fillStyle: dataset.borderColor as string,
-                        strokeStyle: dataset.borderColor as string,
-                        lineWidth: 2,
-                        hidden: !chart.isDatasetVisible(i),
-                        datasetIndex: i,
-                        pointStyle: 'rectRounded' // Checkbox style
-                      }));
+                      return datasets.map((dataset, i) => {
+                        const isVisible = chart.isDatasetVisible(i);
+                        return {
+                          text: dataset.label || '',
+                          // If visible, fill with dataset color; if hidden, transparent (empty box)
+                          fillStyle: isVisible ? (dataset.borderColor as string) : 'rgba(0,0,0,0)',
+                          // If visible, border uses dataset color; if hidden, black border
+                          strokeStyle: isVisible ? (dataset.borderColor as string) : '#000',
+                          lineWidth: 2,  // Border thickness
+                          hidden: false,  // Never hide the legend item itself
+                          datasetIndex: i
+                        };
+                      });
+                    }
+                  },
+                  onClick: (e, legendItem, legend) => {
+                    // Toggle dataset visibility when clicking legend
+                    const index = legendItem.datasetIndex;
+                    if (index !== undefined) {
+                      const chart = legend.chart;
+                      if (chart.isDatasetVisible(index)) {
+                        chart.hide(index);
+                      } else {
+                        chart.show(index);
+                      }
+                      chart.update();
                     }
                   }
                 },
