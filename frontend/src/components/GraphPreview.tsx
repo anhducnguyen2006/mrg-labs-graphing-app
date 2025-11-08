@@ -39,13 +39,22 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
   
   // Track whether to use custom mixed intervals or uniform 250 intervals
   const useCustomIntervals = useRef(true);
+  // Force re-render trigger
+  const [resetKey, setResetKey] = React.useState(0);
 
   const handleResetZoom = () => {
-    if (chartRef.current) {
-      useCustomIntervals.current = true;
-      chartRef.current.resetZoom();
-    }
+    useCustomIntervals.current = true;
+    // Force complete chart re-render by updating key
+    setResetKey(prev => prev + 1);
   };
+  
+  // Reset to custom intervals whenever new data is loaded
+  React.useEffect(() => {
+    useCustomIntervals.current = true;
+    if (chartRef.current) {
+      chartRef.current.update('none');
+    }
+  }, [baseline, samples, selectedSampleName]);
 
   // Create chart data with proper x-y coordinate pairs
   const data = hasData ? (() => {
@@ -96,7 +105,7 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
 
         {hasData ? (
           <Box w="100%" h="400px">
-            <Line ref={chartRef} data={data!} options={{
+            <Line key={resetKey} ref={chartRef} data={data!} options={{
               responsive: true,
               maintainAspectRatio: false,
               animation: false,
