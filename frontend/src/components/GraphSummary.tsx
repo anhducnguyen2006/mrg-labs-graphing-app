@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -20,16 +20,27 @@ import {
   SimpleGrid,
   Divider,
   useToast,
-  Icon
+  Icon,
+  Tooltip
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon, InfoIcon } from '@chakra-ui/icons';
 import { ParsedCSV } from '../types';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 interface GraphSummaryProps {
   baseline?: ParsedCSV;
   selectedSample?: ParsedCSV;
   baselineFile?: File;
   selectedSampleFile?: File;
+}
+
+interface SimilarityMetrics {
+  sse: number | null;
+  frechet_distance: number | null;
+  normalized_sse: number | null;
+  rmse: number | null;
+  error?: string;
 }
 
 interface AnalysisData {
@@ -56,6 +67,7 @@ interface AnalysisData {
       std_diff: number;
       range_diff: number;
     };
+    similarity?: SimilarityMetrics;
   };
   ai_insights: string;
   metadata: {
@@ -65,6 +77,12 @@ interface AnalysisData {
   };
 }
 
+// Configure marked options
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
 const GraphSummary: React.FC<GraphSummaryProps> = ({
   baseline,
   selectedSample,
@@ -73,12 +91,25 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
 }) => {
   const { isOpen: isInsightsOpen, onToggle: toggleInsights } = useDisclosure({ defaultIsOpen: false });
   const { isOpen: isStatsOpen, onToggle: toggleStats } = useDisclosure({ defaultIsOpen: true });
+  const { isOpen: isSimilarityOpen, onToggle: toggleSimilarity } = useDisclosure({ defaultIsOpen: true });
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
 
   const canAnalyze = baseline && selectedSample && baselineFile && selectedSampleFile;
+
+  // Parse Markdown to HTML with sanitization
+  const renderMarkdown = (markdown: string): string => {
+    const rawHtml = marked.parse(markdown) as string;
+    return DOMPurify.sanitize(rawHtml);
+  };
+
+  // Memoize the parsed HTML to avoid re-rendering
+  const parsedInsights = useMemo(() => {
+    if (!analysis?.ai_insights) return '';
+    return renderMarkdown(analysis.ai_insights);
+  }, [analysis?.ai_insights]);
 
   const generateAnalysis = async () => {
     if (!canAnalyze) {
@@ -109,7 +140,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
       
       toast({
         title: 'Analysis Complete',
-        description: 'AI-powered graph analysis generated successfully!',
+        description: 'AI-powered graph analysis with similarity metrics generated successfully!',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -147,13 +178,44 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
     return 'red';
   };
 
+  const getSimilarityColor = (value: number | null, metricType: 'sse' | 'frechet'): string => {
+    if (value === null) return 'gray';
+    
+    // Lower values are better for both SSE and Fréchet
+    if (metricType === 'sse') {
+      if (value < 10) return 'green';
+      if (value < 50) return 'yellow';
+      return 'red';
+    } else { // frechet
+      if (value < 1) return 'green';
+      if (value < 5) return 'yellow';
+      return 'red';
+    }
+  };
+
+  const getSimilarityLabel = (value: number | null, metricType: 'sse' | 'frechet'): string => {
+    if (value === null) return 'N/A';
+    
+    if (metricType === 'sse') {
+      if (value < 10) return 'Very Similar';
+      if (value < 50) return 'Moderately Similar';
+      if (value < 200) return 'Somewhat Different';
+      return 'Very Different';
+    } else { // frechet
+      if (value < 1) return 'Very Similar';
+      if (value < 5) return 'Moderately Similar';
+      if (value < 10) return 'Somewhat Different';
+      return 'Very Different';
+    }
+  };
+
   if (!canAnalyze) {
     return (
       <Box p={4} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.200">
         <HStack>
           <Icon as={InfoIcon} color="gray.400" />
           <Text color="gray.600" fontSize="sm">
-            Upload both baseline and sample data to see AI-powered analysis
+            Upload both baseline and sample data to see AI-powered analysis with similarity metrics
           </Text>
         </HStack>
       </Box>
@@ -195,7 +257,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
           <VStack spacing={3}>
             <Spinner size="lg" color="blue.500" />
             <Text color="gray.600">
-              Analyzing your graph with AI... This may take a moment.
+              Analyzing your graph with AI and calculating similarity metrics... This may take a moment.
             </Text>
           </VStack>
         </Box>
@@ -217,6 +279,106 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
       {/* Analysis Results */}
       {analysis && !isLoading && (
         <VStack spacing={0} align="stretch">
+          {/* Similarity Metrics Section */}
+          {analysis.statistics.similarity && (
+            <>
+              <Box p={4}>
+                <Button
+                  variant="ghost"
+                  rightIcon={isSimilarityOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                  onClick={toggleSimilarity}
+                  size="sm"
+                  fontWeight="bold"
+                  color="gray.700"
+                  mb={2}
+                >
+                  Similarity Analysis
+                </Button>
+                
+                <Collapse in={isSimilarityOpen} animateOpacity>
+                  <SimpleGrid columns={[1, 2, 4]} spacing={4} mt={2}>
+                    <Tooltip label="Sum of squared differences between curves. Lower is more similar.">
+                      <Stat>
+                        <StatLabel>Sum of Squared Errors</StatLabel>
+                        <StatNumber 
+                          fontSize="md"
+                          color={`${getSimilarityColor(analysis.statistics.similarity.sse, 'sse')}.500`}
+                        >
+                          {analysis.statistics.similarity.sse !== null 
+                            ? formatNumber(analysis.statistics.similarity.sse, 2)
+                            : 'N/A'}
+                        </StatNumber>
+                        <StatHelpText>
+                          {getSimilarityLabel(analysis.statistics.similarity.sse, 'sse')}
+                        </StatHelpText>
+                      </Stat>
+                    </Tooltip>
+
+                    <Tooltip label="Root mean square error - normalized measure of curve differences.">
+                      <Stat>
+                        <StatLabel>RMSE</StatLabel>
+                        <StatNumber fontSize="md">
+                          {analysis.statistics.similarity.rmse !== null 
+                            ? formatNumber(analysis.statistics.similarity.rmse, 4)
+                            : 'N/A'}
+                        </StatNumber>
+                        <StatHelpText>
+                          Root Mean Square Error
+                        </StatHelpText>
+                      </Stat>
+                    </Tooltip>
+
+                    <Tooltip label="Fréchet distance measures geometric similarity between curves. Lower is more similar.">
+                      <Stat>
+                        <StatLabel>Fréchet Distance</StatLabel>
+                        <StatNumber 
+                          fontSize="md"
+                          color={`${getSimilarityColor(analysis.statistics.similarity.frechet_distance, 'frechet')}.500`}
+                        >
+                          {analysis.statistics.similarity.frechet_distance !== null 
+                            ? formatNumber(analysis.statistics.similarity.frechet_distance, 4)
+                            : 'N/A'}
+                        </StatNumber>
+                        <StatHelpText>
+                          {getSimilarityLabel(analysis.statistics.similarity.frechet_distance, 'frechet')}
+                        </StatHelpText>
+                      </Stat>
+                    </Tooltip>
+
+                    <Tooltip label="SSE normalized by number of data points.">
+                      <Stat>
+                        <StatLabel>Normalized SSE</StatLabel>
+                        <StatNumber fontSize="md">
+                          {analysis.statistics.similarity.normalized_sse !== null 
+                            ? formatNumber(analysis.statistics.similarity.normalized_sse, 4)
+                            : 'N/A'}
+                        </StatNumber>
+                        <StatHelpText>
+                          Per data point
+                        </StatHelpText>
+                      </Stat>
+                    </Tooltip>
+                  </SimpleGrid>
+
+                  {/* Similarity interpretation */}
+                  <Box mt={4} p={3} bg="blue.50" borderRadius="md">
+                    <Text fontSize="xs" color="blue.700" fontWeight="medium">
+                      📊 Similarity Interpretation:
+                    </Text>
+                    <Text fontSize="xs" color="blue.600" mt={1}>
+                      • <strong>SSE & RMSE:</strong> Measure point-by-point differences. Lower values indicate curves are closer together.
+                    </Text>
+                    <Text fontSize="xs" color="blue.600">
+                      • <strong>Fréchet Distance:</strong> Considers curve shape and trajectory. Useful for identifying pattern similarities even with shifts.
+                    </Text>
+                  </Box>
+                </Collapse>
+              </Box>
+
+              <Divider />
+            </>
+          )}
+
           {/* Statistical Summary */}
           <Box p={4}>
             <Button
@@ -271,7 +433,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
 
           <Divider />
 
-          {/* AI Insights */}
+          {/* AI Insights with Markdown Rendering */}
           <Box p={4}>
             <Button
               variant="ghost"
@@ -294,14 +456,47 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
                 borderColor="gray.200"
                 mt={2}
               >
-                <Text
+                {/* Render Markdown as HTML */}
+                <Box
+                  className="markdown-content"
                   fontSize="sm"
                   color="gray.700"
-                  whiteSpace="pre-wrap"
                   lineHeight="1.6"
-                >
-                  {analysis.ai_insights}
-                </Text>
+                  dangerouslySetInnerHTML={{ __html: parsedInsights }}
+                  sx={{
+                    '& h1': { fontSize: '1.5em', fontWeight: 'bold', marginTop: '0.5em', marginBottom: '0.5em' },
+                    '& h2': { fontSize: '1.3em', fontWeight: 'bold', marginTop: '0.5em', marginBottom: '0.5em' },
+                    '& h3': { fontSize: '1.1em', fontWeight: 'bold', marginTop: '0.5em', marginBottom: '0.5em' },
+                    '& p': { marginBottom: '0.75em' },
+                    '& ul, & ol': { paddingLeft: '1.5em', marginBottom: '0.75em' },
+                    '& li': { marginBottom: '0.25em' },
+                    '& strong': { fontWeight: 'bold', color: 'gray.800' },
+                    '& em': { fontStyle: 'italic' },
+                    '& code': { 
+                      backgroundColor: 'gray.200', 
+                      padding: '0.125em 0.25em', 
+                      borderRadius: '0.25em',
+                      fontSize: '0.9em',
+                      fontFamily: 'monospace'
+                    },
+                    '& pre': {
+                      backgroundColor: 'gray.800',
+                      color: 'white',
+                      padding: '0.75em',
+                      borderRadius: '0.375em',
+                      overflow: 'auto',
+                      marginBottom: '0.75em'
+                    },
+                    '& blockquote': {
+                      borderLeft: '4px solid',
+                      borderColor: 'blue.400',
+                      paddingLeft: '1em',
+                      fontStyle: 'italic',
+                      color: 'gray.600',
+                      marginBottom: '0.75em'
+                    }
+                  }}
+                />
                 
                 <Box mt={4} pt={3} borderTop="1px solid" borderColor="gray.300">
                   <HStack justify="space-between" fontSize="xs" color="gray.500">
