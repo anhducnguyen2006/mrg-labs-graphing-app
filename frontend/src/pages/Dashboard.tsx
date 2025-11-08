@@ -104,8 +104,7 @@ const Dashboard: React.FC = () => {
         baseline={baselineParsed}
         samples={sampleParsed}
       />
-    </DashboardLayout>
-      
+
       {/* AI Chatbox */}
       <Chatbox 
         graphContext={
@@ -120,7 +119,7 @@ const Dashboard: React.FC = () => {
           allSamples: sampleParsed
         }}
       />
-    </HStack>
+    </DashboardLayout>
   );
 };
 
