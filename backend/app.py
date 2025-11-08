@@ -9,8 +9,14 @@ import tempfile
 import shutil
 
 from utils.plotter import generate_and_save, SAVE_DIR
+from graph_analysis import router as analysis_router
+from chatbox import router as chat_router
 
 app = FastAPI(title="MRG Labs Graphing API")
+
+# Include routers for new services
+app.include_router(analysis_router)
+app.include_router(chat_router)
 
 # CORS (dev: allow localhost frontend)
 app.add_middleware(

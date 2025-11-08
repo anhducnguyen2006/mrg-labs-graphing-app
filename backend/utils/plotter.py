@@ -17,6 +17,17 @@ def read_csv(file_obj) -> Tuple[pd.Series, pd.Series]:
     y = df.iloc[:, 1]
     return x, y
 
+def process_file(upload_file) -> pd.DataFrame:
+    """Process uploaded file and return DataFrame for analysis"""
+    df = pd.read_csv(upload_file.file, header=1)
+    return df
+
+def create_comparison_plot(baseline_df: pd.DataFrame, sample_df: pd.DataFrame, sample_name: str):
+    """Create a comparison plot between baseline and sample data"""
+    # This function is used by the analysis module
+    # Implementation can be added if needed for specific plotting requirements
+    pass
+
 
 def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, save_subdir: Optional[str] = None, format: str = "png") -> List[str]:
     x_base, y_base = read_csv(baseline_upload.file)
