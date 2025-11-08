@@ -13,6 +13,7 @@ import FileUploadBox from '../components/FileUploadBox';
 import GraphPreview from '../components/GraphPreview';
 import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
+import Chatbox from '../components/Chatbox';
 import { ParsedCSV } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -53,7 +54,7 @@ const Dashboard: React.FC = () => {
       />
       
       {/* Main Content */}
-      <Box flex={1} p={6} overflowY="auto">
+      <Box flex={1} p={6} overflowY="auto" pr={16}>
         <VStack align="stretch" spacing={6}>
           <HStack justify="space-between">
             <Heading size="lg">MRG Labs Graphing Dashboard</Heading>
@@ -92,7 +93,9 @@ const Dashboard: React.FC = () => {
             baseline={baselineParsed} 
             samples={sampleParsed} 
             selectedSampleName={selectedSample} 
-            onSelectSample={setSelectedSample} 
+            onSelectSample={setSelectedSample}
+            baselineFile={baselineFile}
+            sampleFiles={sampleFiles}
           />
         </VStack>
       </Box>
@@ -103,6 +106,21 @@ const Dashboard: React.FC = () => {
         onClose={onClose}
         baseline={baselineParsed}
         samples={sampleParsed}
+      />
+      
+      {/* AI Chatbox */}
+      <Chatbox 
+        graphContext={
+          baselineParsed && selectedSample 
+            ? `Analyzing comparison between ${baselineParsed.filename} (baseline) and ${selectedSample} (sample)`
+            : undefined
+        }
+        graphData={{
+          baseline: baselineParsed,
+          selectedSample: sampleParsed.find(s => s.filename === selectedSample),
+          selectedSampleName: selectedSample,
+          allSamples: sampleParsed
+        }}
       />
     </HStack>
   );

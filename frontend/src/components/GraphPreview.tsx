@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Box, VStack, Text, HStack, Button } from '@chakra-ui/react';
 import { ParsedCSV } from '../types';
+import GraphSummary from './GraphSummary';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -30,12 +31,26 @@ interface Props {
   samples: ParsedCSV[];
   selectedSampleName?: string;
   onSelectSample: (name: string) => void;
+  baselineFile?: File;
+  sampleFiles?: FileList;
 }
 
-const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, onSelectSample }) => {
+const GraphPreview: React.FC<Props> = ({ 
+  baseline, 
+  samples, 
+  selectedSampleName, 
+  onSelectSample, 
+  baselineFile, 
+  sampleFiles 
+}) => {
   const chartRef = useRef<any>(null);
   const sample = samples.find((s: ParsedCSV) => s.filename === selectedSampleName) || samples[0];
   const hasData = baseline && sample;
+  
+  // Find the corresponding File object for the selected sample
+  const selectedSampleFile = sampleFiles && selectedSampleName ? 
+    Array.from(sampleFiles).find(file => file.name === selectedSampleName) : 
+    undefined;
 
   const handleResetZoom = () => {
     if (chartRef.current) {
@@ -177,6 +192,14 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
         ) : (
           <Text fontSize="sm" color="gray.500">Upload baseline and at least one sample to see preview.</Text>
         )}
+        
+        {/* AI-Powered Graph Summary */}
+        <GraphSummary
+          baseline={baseline}
+          selectedSample={sample}
+          baselineFile={baselineFile}
+          selectedSampleFile={selectedSampleFile}
+        />
       </VStack>
     </Box>
   );
