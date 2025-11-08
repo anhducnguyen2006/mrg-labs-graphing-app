@@ -11,6 +11,7 @@ import GraphPreview from '../components/GraphPreview';
 import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
 import DashboardLayout from '../components/DashboardLayout';
+import Chatbox from '../components/Chatbox';
 import { ParsedCSV } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -84,12 +85,14 @@ const Dashboard: React.FC = () => {
               }}
             />
           </SimpleGrid>
-
-          <GraphPreview
-            baseline={baselineParsed}
-            samples={sampleParsed}
-            selectedSampleName={selectedSample}
+          
+          <GraphPreview 
+            baseline={baselineParsed} 
+            samples={sampleParsed} 
+            selectedSampleName={selectedSample} 
             onSelectSample={setSelectedSample}
+            baselineFile={baselineFile}
+            sampleFiles={sampleFiles}
           />
         </VStack>
       </Box>
@@ -102,6 +105,22 @@ const Dashboard: React.FC = () => {
         samples={sampleParsed}
       />
     </DashboardLayout>
+      
+      {/* AI Chatbox */}
+      <Chatbox 
+        graphContext={
+          baselineParsed && selectedSample 
+            ? `Analyzing comparison between ${baselineParsed.filename} (baseline) and ${selectedSample} (sample)`
+            : undefined
+        }
+        graphData={{
+          baseline: baselineParsed,
+          selectedSample: sampleParsed.find(s => s.filename === selectedSample),
+          selectedSampleName: selectedSample,
+          allSamples: sampleParsed
+        }}
+      />
+    </HStack>
   );
 };
 
