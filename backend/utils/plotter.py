@@ -71,16 +71,20 @@ def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, sav
         x_base_pos = map_x_to_position(x_base)
         x_s_pos = map_x_to_position(x_s)
         
+        # Remove .csv extension from filenames for labels
+        baseline_name = os.path.splitext(baseline_upload.filename)[0]
+        sample_name = os.path.splitext(sample.filename)[0]
+        
         # Plot with transformed x positions
         ax.plot(x_base_pos, y_base, 
                 color="#006400",  # Dark green
                 linewidth=0.8,  # Thinner lines
-                label=f'Baseline: {baseline_upload.filename}',
+                label=f'Baseline: {baseline_name}',
                 alpha=1.0)
         ax.plot(x_s_pos, y_s, 
                 color="#0000FF",  # Dark blue
                 linewidth=0.8,  # Thinner lines
-                label=f'Sample: {sample.filename}',
+                label=f'Sample: {sample_name}',
                 alpha=1.0)
         
         # Calculate maximum absorbance from both datasets for y-axis limit
@@ -147,8 +151,9 @@ def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, sav
         ax.tick_params(axis='both', which='major', labelsize=11, colors='#666', width=0.8)
         ax.tick_params(axis='both', which='minor', width=0.5)
         
-        # Add a title
-        plt.title(f'Spectroscopy Analysis: {sample.filename}', 
+        # Add a title - remove .csv extension from filename
+        sample_name = os.path.splitext(sample.filename)[0]
+        plt.title(f'Spectroscopy Analysis: {sample_name}', 
                  fontsize=16, fontweight='bold', color='#333', pad=20)
         
         # Tight layout with padding
