@@ -37,35 +37,65 @@ def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, sav
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 8), facecolor='white')
         
-        # Plot with darker colors, full opacity, and thinner lines
-        ax.plot(x_base, y_base, 
-                color="#006400",  # Dark green (rgb(0,100,0))
+        # Define custom x-axis ticks with equal visual spacing
+        custom_xticks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550]
+        
+        # Create mapping from actual wavenumber to equally-spaced position
+        # This will make the visual spacing equal even though values are uneven
+        x_to_pos = {}
+        for i, tick in enumerate(custom_xticks):
+            x_to_pos[tick] = i
+        
+        # Interpolate data points to the new equal-spacing scale
+        def map_x_to_position(x_values):
+            positions = []
+            for x in x_values:
+                # Find which segment this x falls into and interpolate position
+                if x >= 4000:
+                    positions.append(0)
+                elif x <= 550:
+                    positions.append(len(custom_xticks) - 1)
+                else:
+                    # Find the two ticks this x falls between
+                    for i in range(len(custom_xticks) - 1):
+                        if custom_xticks[i] >= x >= custom_xticks[i + 1]:
+                            # Linear interpolation
+                            x1, x2 = custom_xticks[i], custom_xticks[i + 1]
+                            pos1, pos2 = i, i + 1
+                            t = (x - x1) / (x2 - x1)
+                            positions.append(pos1 + t * (pos2 - pos1))
+                            break
+            return positions
+        
+        # Map data to equal-spaced positions
+        x_base_pos = map_x_to_position(x_base)
+        x_s_pos = map_x_to_position(x_s)
+        
+        # Plot with transformed x positions
+        ax.plot(x_base_pos, y_base, 
+                color="#006400",  # Dark green
                 linewidth=0.8,  # Thinner lines
                 label=f'Baseline: {baseline_upload.filename}',
                 alpha=1.0)
-        ax.plot(x_s, y_s, 
-                color="#0000FF",  # Dark blue (rgb(0,0,139))
+        ax.plot(x_s_pos, y_s, 
+                color="#0000FF",  # Dark blue
                 linewidth=0.8,  # Thinner lines
                 label=f'Sample: {sample.filename}',
                 alpha=1.0)
         
-        # Set axis limits and labels (normal order: 4000 first, 550 last)
-        ax.set_xlim(550, 4000)  # Reversed: 550 to 4000 (so 4000 appears first on left)
-        ax.set_ylim(0.2, 6)   # Set y-axis limits (max at 6)
+        # Set axis with equal-spaced positions
+        ax.set_xlim(-0.5, len(custom_xticks) - 0.5)
+        ax.set_ylim(0.2, 6)
         ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=14, fontweight='bold', color='#333')
         ax.set_ylabel('Absorbance', fontsize=14, fontweight='bold', color='#333')
-        # Don't invert x-axis - we want normal order with xlim reversed
         
-        # Set custom x-axis tick intervals
-        # From 4000 to 2000: decrease by 500
-        # From 2000 to 750: decrease by 250
-        # Final tick at 550
-        custom_xticks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550]
-        ax.set_xticks(custom_xticks)
+        # Set tick positions and labels
+        tick_positions = list(range(len(custom_xticks)))
+        ax.set_xticks(tick_positions)
+        ax.set_xticklabels(custom_xticks)
         
-        # Improve grid
-        ax.grid(True, alpha=0.3, linewidth=0.5, color='#cccccc')
-        ax.set_axisbelow(True)
+        # Remove grid lines
+        ax.grid(False)
         
         # Style the legend - position below x-axis
         legend = ax.legend(loc='upper center', 
