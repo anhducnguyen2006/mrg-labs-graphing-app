@@ -37,17 +37,17 @@ def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, sav
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 8), facecolor='white')
         
-        # Plot with improved styling
+        # Plot with thin lines and reduced opacity for better overlay visibility
         ax.plot(x_base, y_base, 
-                color='#2E8B57', 
-                linewidth=1.5, 
+                color="#004A20", 
+                linewidth=1, 
                 label=f'Baseline: {baseline_upload.filename}',
-                alpha=0.9)
+                alpha=0.6)
         ax.plot(x_s, y_s, 
-                color='#4169E1', 
-                linewidth=1.5, 
+                color="#0040FF", 
+                linewidth=1, 
                 label=f'Sample: {sample.filename}',
-                alpha=0.9)
+                alpha=0.6)
         
         # Set axis limits and labels
         ax.set_xlim(4000, 550)  # Reverse x-axis for spectroscopy convention

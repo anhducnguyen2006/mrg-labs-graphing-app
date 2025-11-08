@@ -55,23 +55,23 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
         {
           label: `Baseline: ${baseline!.filename}`,
           data: baselineData,
-          borderColor: '#2E8B57', // Sea green - more professional
+          borderColor: 'rgba(46,139,87,0.6)', // Sea green with opacity
           backgroundColor: 'rgba(46,139,87,0.05)',
           tension: 0.2,
           pointRadius: 0,
           pointHoverRadius: 3,
-          borderWidth: 1.5, // Thinner line
+          borderWidth: 1, // Thin line
           fill: false,
         },
         {
           label: `Sample: ${sample.filename}`,
           data: sampleData,
-          borderColor: '#4169E1', // Royal blue - more professional
+          borderColor: 'rgba(65,105,225,0.6)', // Royal blue with opacity
           backgroundColor: 'rgba(65,105,225,0.05)',
           tension: 0.2,
           pointRadius: 0,
           pointHoverRadius: 3,
-          borderWidth: 1.5, // Thinner line
+          borderWidth: 1, // Thin line
           fill: false,
         }
       ]
