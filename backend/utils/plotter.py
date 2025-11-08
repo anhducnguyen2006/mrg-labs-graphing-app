@@ -83,13 +83,38 @@ def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, sav
                 label=f'Sample: {sample.filename}',
                 alpha=1.0)
         
+        # Calculate maximum absorbance from both datasets for y-axis limit
+        max_absorbance = max(y_base.max(), y_s.max())
+        
+        # Y-axis setup: minimum, then 0.5 intervals, then maximum
+        y_min = 0.2
+        y_interval = 0.5
+        
+        # Start with minimum value
+        y_ticks = [round(y_min, 1)]
+        
+        # Add regular 0.5 intervals starting from 0.5
+        current_tick = 0.5
+        while current_tick < max_absorbance:
+            y_ticks.append(round(current_tick, 1))
+            current_tick += y_interval
+        
+        # Add the maximum as the final tick, rounded to 1 decimal place
+        y_ticks.append(round(max_absorbance, 1))
+        y_max = max_absorbance
+        
         # Set axis with equal-spaced positions
-        ax.set_xlim(-0.5, len(custom_xticks) - 0.5)
-        ax.set_ylim(0.2, 6)
+        # Start at 0 so 4000 (position 0) aligns with y-axis
+        ax.set_xlim(0, len(custom_xticks) - 1)
+        ax.set_ylim(y_min, y_max)
         ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=14, fontweight='bold', color='#333')
         ax.set_ylabel('Absorbance', fontsize=14, fontweight='bold', color='#333')
         
-        # Set tick positions and labels
+        # Set y-axis ticks with 1 decimal place formatting
+        ax.set_yticks(y_ticks)
+        ax.set_yticklabels([f'{tick:.1f}' for tick in y_ticks])
+        
+        # Set tick positions and labels for x-axis
         tick_positions = list(range(len(custom_xticks)))
         ax.set_xticks(tick_positions)
         ax.set_xticklabels(custom_xticks)
