@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
+import { User } from '../types';
 
 interface DashboardLayoutProps {
     sidebar: React.ReactNode;
     children: React.ReactNode;
     navbarRightContent?: React.ReactNode;
     navbarTitle?: string;
+    user?: User;
+    onChangePasswordClick?: () => void;
+    onLogoutClick?: () => void;
 }
 
 const MotionBox = motion(Box);
@@ -16,7 +20,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     sidebar,
     children,
     navbarRightContent,
-    navbarTitle
+    navbarTitle,
+    user,
+    onChangePasswordClick,
+    onLogoutClick,
 }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
@@ -37,6 +44,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onToggleSidebar={handleToggleSidebar}
                 title={navbarTitle}
                 rightContent={navbarRightContent}
+                user={user}
+                onChangePasswordClick={onChangePasswordClick}
+                onLogoutClick={onLogoutClick}
             />
 
             {/* Main content area with sidebar */}

@@ -4,7 +4,8 @@ import {
   VStack,
   Box,
   Button,
-  useDisclosure
+  useDisclosure,
+  useToast
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/FileUploadBox';
 import GraphPreview from '../components/GraphPreview';
@@ -12,7 +13,7 @@ import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
 import DashboardLayout from '../components/DashboardLayout';
 import Chatbox from '../components/Chatbox';
-import { ParsedCSV } from '../types';
+import { ParsedCSV, User } from '../types';
 
 const Dashboard: React.FC = () => {
   const [baselineParsed, setBaselineParsed] = useState<ParsedCSV | undefined>();
@@ -21,6 +22,36 @@ const Dashboard: React.FC = () => {
   const [sampleFiles, setSampleFiles] = useState<FileList | undefined>();
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
+
+  // Mock user data - replace with actual user data from authentication
+  const currentUser: User = {
+    name: 'John Doe',
+    email: 'john@example.com',
+    avatarUrl: undefined, // Will use initials from name
+  };
+
+  // User profile menu handlers
+  const handleChangePasswordClick = () => {
+    toast({
+      title: 'Change Password',
+      description: 'Change password functionality coming soon!',
+      status: 'info',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const handleLogoutClick = () => {
+    toast({
+      title: 'Logout',
+      description: 'Logging out...',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+    // Add actual logout logic here
+  };
 
   const handleRemoveSample = (filename: string) => {
     const updatedSamples = sampleParsed.filter(s => s.filename !== filename);
@@ -49,6 +80,9 @@ const Dashboard: React.FC = () => {
           Export Graphs
         </Button>
       }
+      user={currentUser}
+      onChangePasswordClick={handleChangePasswordClick}
+      onLogoutClick={handleLogoutClick}
       sidebar={
         <SampleSidebar
           samples={sampleParsed}
@@ -85,11 +119,11 @@ const Dashboard: React.FC = () => {
               }}
             />
           </SimpleGrid>
-          
-          <GraphPreview 
-            baseline={baselineParsed} 
-            samples={sampleParsed} 
-            selectedSampleName={selectedSample} 
+
+          <GraphPreview
+            baseline={baselineParsed}
+            samples={sampleParsed}
+            selectedSampleName={selectedSample}
             onSelectSample={setSelectedSample}
             baselineFile={baselineFile}
             sampleFiles={sampleFiles}
@@ -106,9 +140,9 @@ const Dashboard: React.FC = () => {
       />
 
       {/* AI Chatbox */}
-      <Chatbox 
+      <Chatbox
         graphContext={
-          baselineParsed && selectedSample 
+          baselineParsed && selectedSample
             ? `Analyzing comparison between ${baselineParsed.filename} (baseline) and ${selectedSample} (sample)`
             : undefined
         }
