@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Container, 
-  Heading, 
-  SimpleGrid, 
-  VStack, 
-  HStack, 
-  Box, 
-  Button, 
-  useDisclosure 
+import {
+  SimpleGrid,
+  VStack,
+  Box,
+  Button,
+  useDisclosure
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/FileUploadBox';
 import GraphPreview from '../components/GraphPreview';
 import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
+import DashboardLayout from '../components/DashboardLayout';
 import Chatbox from '../components/Chatbox';
 import { ParsedCSV } from '../types';
 
@@ -27,7 +25,7 @@ const Dashboard: React.FC = () => {
   const handleRemoveSample = (filename: string) => {
     const updatedSamples = sampleParsed.filter(s => s.filename !== filename);
     setSampleParsed(updatedSamples);
-    
+
     // Update selected sample if the removed one was selected
     if (selectedSample === filename) {
       setSelectedSample(updatedSamples.length > 0 ? updatedSamples[0].filename : undefined);
@@ -44,38 +42,37 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <HStack spacing={0} align="start" h="100vh">
-      {/* Sidebar */}
-      <SampleSidebar 
-        samples={sampleParsed}
-        selectedSampleName={selectedSample}
-        onSelectSample={setSelectedSample}
-        onRemoveSample={handleRemoveSample}
-      />
-      
-      {/* Main Content */}
-      <Box flex={1} p={6} overflowY="auto" pr={16}>
+    <DashboardLayout
+      navbarTitle="MRG Labs Graphing Dashboard"
+      navbarRightContent={
+        <Button colorScheme="blue" onClick={onOpen}>
+          Export Graphs
+        </Button>
+      }
+      sidebar={
+        <SampleSidebar
+          samples={sampleParsed}
+          selectedSampleName={selectedSample}
+          onSelectSample={setSelectedSample}
+          onRemoveSample={handleRemoveSample}
+        />
+      }
+    >
+      <Box p={6}>
         <VStack align="stretch" spacing={6}>
-          <HStack justify="space-between">
-            <Heading size="lg">MRG Labs Graphing Dashboard</Heading>
-            <Button colorScheme="blue" onClick={onOpen}>
-              Export Graphs
-            </Button>
-          </HStack>
-          
           <SimpleGrid columns={[1, null, 2]} spacing={4}>
-            <FileUploadBox 
-              label="Baseline CSV" 
-              multiple={false} 
-              acceptBaseline 
+            <FileUploadBox
+              label="Baseline CSV"
+              multiple={false}
+              acceptBaseline
               onFilesParsed={(files, raw) => {
                 setBaselineParsed(files[0]);
                 setBaselineFile(raw[0]);
-              }} 
+              }}
             />
-            <FileUploadBox 
-              label="Sample CSVs" 
-              multiple 
+            <FileUploadBox
+              label="Sample CSVs"
+              multiple
               onFilesParsed={(files: ParsedCSV[], raw: FileList) => {
                 setSampleParsed(files);
                 setSampleFiles(raw);
@@ -85,7 +82,7 @@ const Dashboard: React.FC = () => {
                 } else if (!selectedSample || !files.some(f => f.filename === selectedSample)) {
                   setSelectedSample(files[0].filename);
                 }
-              }} 
+              }}
             />
           </SimpleGrid>
           
@@ -101,12 +98,13 @@ const Dashboard: React.FC = () => {
       </Box>
 
       {/* Export Dialog */}
-      <ExportDialog 
+      <ExportDialog
         isOpen={isOpen}
         onClose={onClose}
         baseline={baselineParsed}
         samples={sampleParsed}
       />
+    </DashboardLayout>
       
       {/* AI Chatbox */}
       <Chatbox 
