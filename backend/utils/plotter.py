@@ -37,30 +37,40 @@ def generate_and_save(baseline_upload, sample_uploads: List, dpi: int = 300, sav
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 8), facecolor='white')
         
-        # Plot with thin lines and reduced opacity for better overlay visibility
+        # Plot with darker colors, full opacity, and thinner lines
         ax.plot(x_base, y_base, 
-                color="#004A20", 
-                linewidth=1, 
+                color="#006400",  # Dark green (rgb(0,100,0))
+                linewidth=0.8,  # Thinner lines
                 label=f'Baseline: {baseline_upload.filename}',
-                alpha=0.6)
+                alpha=1.0)
         ax.plot(x_s, y_s, 
-                color="#0040FF", 
-                linewidth=1, 
+                color="#0000FF",  # Dark blue (rgb(0,0,139))
+                linewidth=0.8,  # Thinner lines
                 label=f'Sample: {sample.filename}',
-                alpha=0.6)
+                alpha=1.0)
         
-        # Set axis limits and labels
-        ax.set_xlim(4000, 550)  # Reverse x-axis for spectroscopy convention
-        ax.set_ylim(0.2, 5.3)   # Set y-axis limits
+        # Set axis limits and labels (normal order: 4000 first, 550 last)
+        ax.set_xlim(550, 4000)  # Reversed: 550 to 4000 (so 4000 appears first on left)
+        ax.set_ylim(0.2, 6)   # Set y-axis limits (max at 6)
         ax.set_xlabel('Wavenumber (cm⁻¹)', fontsize=14, fontweight='bold', color='#333')
         ax.set_ylabel('Absorbance', fontsize=14, fontweight='bold', color='#333')
+        # Don't invert x-axis - we want normal order with xlim reversed
+        
+        # Set custom x-axis tick intervals
+        # From 4000 to 2000: decrease by 500
+        # From 2000 to 750: decrease by 250
+        # Final tick at 550
+        custom_xticks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550]
+        ax.set_xticks(custom_xticks)
         
         # Improve grid
         ax.grid(True, alpha=0.3, linewidth=0.5, color='#cccccc')
         ax.set_axisbelow(True)
         
-        # Style the legend
-        legend = ax.legend(loc='upper right', 
+        # Style the legend - position below x-axis
+        legend = ax.legend(loc='upper center', 
+                          bbox_to_anchor=(0.5, -0.15),  # Position below the plot
+                          ncol=2,  # Two columns for horizontal layout
                           frameon=True, 
                           fancybox=True, 
                           shadow=True,

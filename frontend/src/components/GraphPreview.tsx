@@ -36,9 +36,13 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
   const chartRef = useRef<any>(null);
   const sample = samples.find((s: ParsedCSV) => s.filename === selectedSampleName) || samples[0];
   const hasData = baseline && sample;
+  
+  // Track whether to use custom mixed intervals or uniform 250 intervals
+  const useCustomIntervals = useRef(true);
 
   const handleResetZoom = () => {
     if (chartRef.current) {
+      useCustomIntervals.current = true;
       chartRef.current.resetZoom();
     }
   };
@@ -55,23 +59,23 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
         {
           label: `Baseline: ${baseline!.filename}`,
           data: baselineData,
-          borderColor: 'rgba(46,139,87,0.6)', // Sea green with opacity
-          backgroundColor: 'rgba(46,139,87,0.05)',
+          borderColor: 'rgb(0, 100, 0)', // Darker green - fully opaque
+          backgroundColor: 'rgba(0,100,0,0.05)',
           tension: 0.2,
           pointRadius: 0,
           pointHoverRadius: 3,
-          borderWidth: 1, // Thin line
+          borderWidth: 0.45, // Slightly thicker for visibility
           fill: false,
         },
         {
           label: `Sample: ${sample.filename}`,
           data: sampleData,
-          borderColor: 'rgba(65,105,225,0.6)', // Royal blue with opacity
-          backgroundColor: 'rgba(65,105,225,0.05)',
+          borderColor: 'rgb(0, 0, 255)', // Darker blue - fully opaque
+          backgroundColor: 'rgb(0, 0, 255)',
           tension: 0.2,
           pointRadius: 0,
           pointHoverRadius: 3,
-          borderWidth: 1, // Thin line
+          borderWidth: 0.45, // Slightly thicker for visibility
           fill: false,
         }
       ]
@@ -117,9 +121,25 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                     lineWidth: 0.5
                   },
                   ticks: {
-                    maxTicksLimit: 10,
                     color: '#666',
-                    font: { size: 12 }
+                    font: { size: 12 },
+                    autoSkip: true,
+                    maxTicksLimit: 15,
+                    callback: function(value) {
+                      // Round to whole numbers (no decimals)
+                      const numValue = typeof value === 'number' ? value : parseFloat(value);
+                      return Math.round(numValue);
+                    }
+                  },
+                  // Dynamically generate ticks based on zoom state
+                  afterBuildTicks: (axis) => {
+                    if (useCustomIntervals.current) {
+                      // Default/Reset view: Mixed intervals (500 from 4000-2000, 250 from 2000-750, then 550)
+                      axis.ticks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550].map(value => ({ value }));
+                    }
+                    // When zoomed (useCustomIntervals.current === false):
+                    // Let Chart.js auto-generate ticks with adaptive scaling
+                    // The callback above will ensure they're rounded to whole numbers
                   }
                 },
                 y: {
@@ -131,7 +151,7 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                     color: '#333'
                   },
                   min: 0.2,
-                  max: 5.3,
+                  max: 6,
                   grid: {
                     color: '#e0e0e0',
                     lineWidth: 0.5
@@ -165,10 +185,24 @@ const GraphPreview: React.FC<Props> = ({ baseline, samples, selectedSampleName, 
                       enabled: true
                     },
                     mode: 'xy',
+                    onZoomComplete: ({ chart }) => {
+                      // Switch to uniform 250-unit intervals when zoomed
+                      useCustomIntervals.current = false;
+                      chart.update('none');
+                    }
                   },
                   pan: {
                     enabled: true,
                     mode: 'xy',
+                    onPanComplete: ({ chart }) => {
+                      // Maintain 250-unit intervals during pan
+                      useCustomIntervals.current = false;
+                      chart.update('none');
+                    }
+                  },
+                  limits: {
+                    x: { min: 400, max: 4500 },
+                    y: { min: 0, max: 10 }
                   }
                 }
               }
