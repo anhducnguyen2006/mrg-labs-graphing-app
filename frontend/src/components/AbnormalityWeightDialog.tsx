@@ -29,8 +29,8 @@ interface Props {
     initialWeights?: RangeWeight[];
 }
 
-const handleColors = ["black", "gray.400", "gray.700"];
-const labels = ["Evaporation", "Other", "Oxidation"];
+const handleColors = ["black", "gray.700", "gray.500", "gray.300"];
+const labels = ["Starting", "Evaporation", "Other", "Oxidation"];
 
 const AbnormalityWeightDialog: React.FC<Props> = ({
     isOpen,
@@ -38,8 +38,8 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
     onSave,
     initialWeights
 }) => {
-    const [breakpoints, setBreakpoints] = useState<number[]>([2750, 1750, 550]);
-    const [weights, setWeights] = useState<number[]>([0.3, 0.3, 0.4]);
+    const [breakpoints, setBreakpoints] = useState<number[]>([2750, 2000, 1750, 550]);
+    const [weights, setWeights] = useState<number[]>([0.25, 0.25, 0.25, 0.25]);
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const trackRef = useRef<HTMLDivElement>(null);
 
@@ -104,7 +104,7 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
             max: MAX,
             weight: weights[0] * 100,
             label: `${labels[0]} (${MAX}-${Math.round(breakpoints[0])} cm⁻¹)`,
-            key: 'range_evaporation'
+            key: 'range_starting'
         });
 
         rangeWeights.push({
@@ -112,14 +112,22 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
             max: breakpoints[0],
             weight: weights[1] * 100,
             label: `${labels[1]} (${Math.round(breakpoints[0])}-${Math.round(breakpoints[1])} cm⁻¹)`,
+            key: 'range_evaporation'
+        });
+
+        rangeWeights.push({
+            min: breakpoints[2],
+            max: breakpoints[1],
+            weight: weights[2] * 100,
+            label: `${labels[2]} (${Math.round(breakpoints[1])}-${Math.round(breakpoints[2])} cm⁻¹)`,
             key: 'range_other'
         });
 
         rangeWeights.push({
             min: MIN,
-            max: breakpoints[1],
-            weight: weights[2] * 100,
-            label: `${labels[2]} (${Math.round(breakpoints[1])}-${MIN} cm⁻¹)`,
+            max: breakpoints[2],
+            weight: weights[3] * 100,
+            label: `${labels[3]} (${Math.round(breakpoints[2])}-${MIN} cm⁻¹)`,
             key: 'range_oxidation'
         });
 
@@ -180,45 +188,50 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
                     </Box>
 
                     <Box>
-                        {labels.map((label, index) => (
-                            <Box
-                                key={index}
-                                mb={3}
-                                p={4}
-                                bg="white"
-                                border="1px"
-                                borderColor="gray.200"
-                                borderRadius="lg"
-                            >
-                                <Flex align="center" justify="space-between" gap={4}>
-                                    <Box flex={1}>
-                                        <Flex align="center" gap={2} mb={2}>
-                                            <Box w="12px" h="12px" borderRadius="full" bg={handleColors[index]} />
-                                            <Text fontWeight="semibold">{label}</Text>
-                                        </Flex>
-                                        <Text fontSize="xs" color="gray.500">
-                                            Range: {Math.round(breakpoints[index])} → {index === 0 ? MAX : Math.round(breakpoints[index + 1])}
-                                        </Text>
-                                    </Box>
-                                    <Box>
-                                        <Text fontSize="xs" fontWeight="medium" color="gray.500" mb={1}>
-                                            Weight
-                                        </Text>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            max="1"
-                                            step="0.01"
-                                            value={weights[index].toFixed(2)}
-                                            onChange={(e) => updateWeight(index, e.target.value)}
-                                            w="64px"
-                                            textAlign="center"
-                                            size="sm"
-                                        />
-                                    </Box>
-                                </Flex>
-                            </Box>
-                        ))}
+                        {labels.map((label, index) => {
+                            const rangeStart = index === 0 ? MAX : Math.round(breakpoints[index - 1]);
+                            const rangeEnd = Math.round(breakpoints[index]);
+
+                            return (
+                                <Box
+                                    key={index}
+                                    mb={3}
+                                    p={4}
+                                    bg="white"
+                                    border="1px"
+                                    borderColor="gray.200"
+                                    borderRadius="lg"
+                                >
+                                    <Flex align="center" justify="space-between" gap={4}>
+                                        <Box flex={1}>
+                                            <Flex align="center" gap={2} mb={2}>
+                                                <Box w="12px" h="12px" borderRadius="full" bg={handleColors[index]} />
+                                                <Text fontWeight="semibold">{label}</Text>
+                                            </Flex>
+                                            <Text fontSize="xs" color="gray.500">
+                                                Range: {rangeStart} → {rangeEnd} cm⁻¹
+                                            </Text>
+                                        </Box>
+                                        <Box>
+                                            <Text fontSize="xs" fontWeight="medium" color="gray.500" mb={1}>
+                                                Weight
+                                            </Text>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max="1"
+                                                step="0.01"
+                                                value={weights[index].toFixed(2)}
+                                                onChange={(e) => updateWeight(index, e.target.value)}
+                                                w="64px"
+                                                textAlign="center"
+                                                size="sm"
+                                            />
+                                        </Box>
+                                    </Flex>
+                                </Box>
+                            );
+                        })}
                     </Box>
 
                     <Box
