@@ -2,19 +2,66 @@
 
 Full-stack web application for the 2025 Schneider Prize challenge. Upload a single baseline CSV and multiple sample CSVs, preview overlay graphs in the browser, and batch-export all sample-vs-baseline plots as PNG images.
 
+## ✨ New Features
+
+🔐 **User Authentication** - Secure signup/login with session management  
+🤖 **AI-Powered Analysis** - Get intelligent insights about your graph data using Google Gemini AI  
+💬 **AI Chat Assistant** - Ask questions and get help analyzing your data in real-time  
+📊 **Advanced Graph Visualization** - Interactive charts with zoom, pan, and custom scaling  
+👤 **User Profiles** - Personal workspaces with saved graphs and analysis history
+
 ## Tech Stack
-- Frontend: React + Vite + TypeScript, Chakra UI, Chart.js (react-chartjs-2), Papa Parse, Axios
-- Backend: FastAPI, Pandas, Matplotlib
-- Containerization: Docker (optional), docker-compose
+
+### Frontend
+
+- **React** + **Vite** + **TypeScript** - Modern, fast development
+- **Chakra UI** - Beautiful, accessible UI components
+- **React Router** - Client-side routing and navigation
+- **Chart.js** (react-chartjs-2) - Interactive graph visualization
+- **Papa Parse** - CSV parsing and data processing
+
+### Backend
+
+- **FastAPI** - High-performance Python API framework
+- **Google Gemini AI** - Advanced AI-powered analysis and chat
+- **MySQL** - User data and session management
+- **Pandas** + **Matplotlib** - Data processing and graph generation
+- **bcrypt** - Secure password hashing
+
+### Infrastructure
+
+- **Docker** + **docker-compose** - Containerized deployment
+- **Session-based auth** - Secure user authentication
 
 ## Features
-- Baseline CSV (single) + multiple sample CSV uploads
-- Local CSV parsing for preview (Papa Parse, skipping first row)
-- Real-time interactive preview of baseline vs selected sample (Chart.js)
-- Batch export: backend generates and saves PNG graphs (`backend/static/generated_graphs/`)
-- Legend includes filenames; axes labeled A (Y) and cm⁻¹ (X)
+
+### Core Functionality
+
+- ✅ Baseline CSV (single) + multiple sample CSV uploads
+- ✅ Real-time interactive preview of baseline vs selected sample
+- ✅ Advanced zoom and pan controls with reset functionality
+- ✅ Custom X-axis scaling for spectroscopy data
+- ✅ Batch export: generates and saves PNG graphs
+- ✅ Dynamic legend with filename display
+- ✅ Professional axes labeling (A for Y-axis, cm⁻¹ for X-axis)
+
+### AI-Powered Features
+
+- 🤖 **Automated Graph Analysis** - Statistical comparisons and pattern recognition
+- 💡 **AI Insights** - Trend identification, anomaly detection, scientific interpretation
+- 💬 **Interactive Chatbot** - Context-aware AI assistant for data analysis questions
+- 📈 **Smart Recommendations** - Data quality assessment and suggestions
+
+### User Management
+
+- 🔐 **Secure Authentication** - User registration and login with bcrypt hashing
+- 👤 **User Profiles** - Personalized dashboards and settings
+- 📁 **File Management** - Track and manage your uploaded graphs
+- 🔒 **Session Management** - Secure session-based authentication
+- 🚪 **Easy Logout** - One-click logout from any page
 
 ## Project Structure
+
 ```
 mrg-labs-graphing-app/
   frontend/
@@ -26,39 +73,174 @@ mrg-labs-graphing-app/
     static/generated_graphs/
 ```
 
-## Running Locally (Dev)
-### Backend
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js (v16+)
+- Python (3.8+)
+- MySQL (8.0+)
+
+### 1. Database Setup
+
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements.txt
-uvicorn backend.app:app --reload --port 8080
+mysql -u root -p < backend/database_setup.sql
 ```
-### Frontend
+
+### 2. Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Create .env file
+cat > .env << EOF
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=your_password
+DB_NAME=mrg_labs_db
+SESSION_SECRET=$(openssl rand -hex 32)
+GEMINI_API_KEY=your_gemini_key
+EOF
+
+# Start backend
+python -m uvicorn app:app --reload --port 8080
+```
+
+### 3. Frontend Setup
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend dev server runs at http://localhost:5173 and proxies /generate_graphs to backend.
 
-## Docker
+### 4. Access Application
+
+Open browser to **http://localhost:5173**
+
+**First time?** Click "Sign Up" to create an account!
+
+## 📖 Documentation
+
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete setup instructions
+- **[AUTH_DOCUMENTATION.md](AUTH_DOCUMENTATION.md)** - Authentication system details
+- **[backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md)** - API endpoints and AI features
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick command reference
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - What was implemented
+
+## 🔑 API Endpoints
+
+### Authentication
+
+- `POST /register` - Create new user account
+- `POST /login` - Login user (creates session)
+- `POST /logout` - Logout user (clears session)
+
+### Graph Operations
+
+- `POST /generate_graphs` - Generate and export graphs (requires auth)
+- `GET /api/v1/files` - Get user's generated files (requires auth)
+
+### AI Services
+
+- `POST /analysis/generate_insights` - Get AI analysis of graph comparison
+- `GET /analysis/health` - Check analysis service status
+- `POST /chat/send_message` - Send message to AI chatbot
+- `POST /chat/quick_question` - Ask quick question without conversation
+- `GET /chat/health` - Check chat service status
+
+## 🐳 Docker Deployment
+
 ```bash
 docker compose build
 docker compose up
 ```
-Frontend served at http://localhost:5173 (nginx), backend at http://localhost:8080.
 
-## API
-POST /generate_graphs
-Form fields: baseline (file), samples (files[])
-Response: `{ "saved_paths": ["/static/generated_graphs/sample1.png", ...] }`
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080
 
-## Future Enhancements
-- Authentication / user workspaces
-- Additional file validation & error reporting
-- Support for exporting combined multi-sample overlay graph
-- Base64 previews returned from backend
+## 📊 Usage Example
 
-## License
-Proprietary (adjust as needed).
+1. **Sign Up/Login** - Create account or sign in
+2. **Upload Baseline** - Select your baseline CSV file
+3. **Upload Samples** - Select one or more sample CSV files
+4. **View Graph** - Interactive graph with zoom/pan controls
+5. **Get AI Analysis** - Automatic analysis with insights
+6. **Chat with AI** - Ask questions about your data
+7. **Export Graphs** - Download generated PNG images
+
+## 🔒 Security Features
+
+- ✅ Password hashing with bcrypt
+- ✅ Session-based authentication
+- ✅ SQL injection prevention
+- ✅ CORS configuration
+- ✅ Protected API routes
+- ✅ Input validation
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+mrg-labs-graphing-app/
+├── frontend/               # React TypeScript frontend
+│   ├── src/
+│   │   ├── pages/         # Login, Signup, Dashboard
+│   │   ├── components/    # Reusable UI components
+│   │   ├── services/      # API calls (auth, etc.)
+│   │   └── contexts/      # React contexts (AuthContext)
+├── backend/               # FastAPI backend
+│   ├── app.py            # Main API application
+│   ├── chatbox.py        # AI chat service
+│   ├── graph_analysis.py # AI analysis service
+│   └── utils/            # Helper functions
+└── docs/                 # Documentation
+```
+
+### Running Tests
+
+```bash
+# Backend tests (if implemented)
+cd backend
+pytest
+
+# Frontend tests (if implemented)
+cd frontend
+npm test
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+Proprietary - MRG Labs (adjust as needed)
+
+## 🙏 Acknowledgments
+
+- Google Gemini AI for intelligent analysis
+- Chakra UI for beautiful components
+- FastAPI for excellent Python framework
+- Chart.js for powerful visualizations
+
+## 📬 Support
+
+For issues and questions:
+
+1. Check the documentation in `/docs` folder
+2. Review the setup guide
+3. Check existing issues on GitHub
+4. Create a new issue with details
+
+---
+
+**Made with ❤️ for the 2025 Schneider Prize Challenge**

@@ -4,7 +4,8 @@ import {
   VStack,
   Box,
   Button,
-  useDisclosure
+  useDisclosure,
+  useToast
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/FileUploadBox';
 import GraphPreview from '../components/GraphPreview';
@@ -12,7 +13,8 @@ import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
 import DashboardLayout from '../components/DashboardLayout';
 import Chatbox from '../components/Chatbox';
-import { ParsedCSV } from '../types';
+import ChangePasswordDialog from '../components/ChangePasswordDialog';
+import { ParsedCSV, User } from '../types';
 
 const Dashboard: React.FC = () => {
   const [baselineParsed, setBaselineParsed] = useState<ParsedCSV | undefined>();
@@ -20,7 +22,50 @@ const Dashboard: React.FC = () => {
   const [sampleParsed, setSampleParsed] = useState<ParsedCSV[]>([]);
   const [sampleFiles, setSampleFiles] = useState<FileList | undefined>();
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
+  const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
+  const toast = useToast();
+
+  // Mock user data - replace with actual user data from authentication
+  const currentUser: User = {
+    name: 'John Doe',
+    email: 'john@example.com',
+    avatarUrl: undefined, // Will use initials from name
+    backgroundUrl: undefined, // Optional: Add a custom background URL
+  };
+
+  // User profile menu handlers
+  const handleChangePasswordClick = () => {
+    onChangePasswordOpen();
+  };
+
+  const handleLogoutClick = async () => {
+    try {
+      await fetch('http://localhost:8080/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      toast({
+        title: 'Logout Failed',
+        description: 'An error occurred during logout.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   const handleRemoveSample = (filename: string) => {
     const updatedSamples = sampleParsed.filter(s => s.filename !== filename);
@@ -45,10 +90,13 @@ const Dashboard: React.FC = () => {
     <DashboardLayout
       navbarTitle="MRG Labs Graphing Dashboard"
       navbarRightContent={
-        <Button colorScheme="blue" onClick={onOpen}>
+        <Button colorScheme="blue" onClick={onExportOpen}>
           Export Graphs
         </Button>
       }
+      user={currentUser}
+      onChangePasswordClick={handleChangePasswordClick}
+      onLogoutClick={handleLogoutClick}
       sidebar={
         <SampleSidebar
           samples={sampleParsed}
@@ -85,11 +133,11 @@ const Dashboard: React.FC = () => {
               }}
             />
           </SimpleGrid>
-          
-          <GraphPreview 
-            baseline={baselineParsed} 
-            samples={sampleParsed} 
-            selectedSampleName={selectedSample} 
+
+          <GraphPreview
+            baseline={baselineParsed}
+            samples={sampleParsed}
+            selectedSampleName={selectedSample}
             onSelectSample={setSelectedSample}
             baselineFile={baselineFile}
             sampleFiles={sampleFiles}
@@ -99,16 +147,22 @@ const Dashboard: React.FC = () => {
 
       {/* Export Dialog */}
       <ExportDialog
-        isOpen={isOpen}
-        onClose={onClose}
+        isOpen={isExportOpen}
+        onClose={onExportClose}
         baseline={baselineParsed}
         samples={sampleParsed}
       />
 
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        isOpen={isChangePasswordOpen}
+        onClose={onChangePasswordClose}
+      />
+
       {/* AI Chatbox */}
-      <Chatbox 
+      <Chatbox
         graphContext={
-          baselineParsed && selectedSample 
+          baselineParsed && selectedSample
             ? `Analyzing comparison between ${baselineParsed.filename} (baseline) and ${selectedSample} (sample)`
             : undefined
         }
