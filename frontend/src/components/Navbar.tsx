@@ -1,19 +1,27 @@
 import React from 'react';
 import { Box, Button, HStack, Heading, useColorModeValue } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
+import UserProfileMenu from './UserProfileMenu';
+import { User } from '../types';
 
 interface NavbarProps {
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
     title?: string;
     rightContent?: React.ReactNode;
+    user?: User;
+    onChangePasswordClick?: () => void;
+    onLogoutClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
     isSidebarOpen,
     onToggleSidebar,
     title = 'MRG Labs Graphing Dashboard',
-    rightContent
+    rightContent,
+    user,
+    onChangePasswordClick,
+    onLogoutClick,
 }) => {
     const bgColor = useColorModeValue('white', 'gray.800');
     const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -48,7 +56,14 @@ const Navbar: React.FC<NavbarProps> = ({
                     </Heading>
                 </HStack>
 
-                {rightContent && <Box>{rightContent}</Box>}
+                <HStack spacing={4}>
+                    {rightContent && <Box>{rightContent}</Box>}
+                    <UserProfileMenu
+                        user={user}
+                        onChangePasswordClick={onChangePasswordClick}
+                        onLogoutClick={onLogoutClick}
+                    />
+                </HStack>
             </HStack>
         </Box>
     );

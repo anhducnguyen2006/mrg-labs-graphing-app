@@ -9,3 +9,10 @@ export interface SavedGraphResponse {
   saved_paths: string[];
   previews?: string[]; // base64 optional
 }
+
+export interface User {
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  backgroundUrl?: string;
+}
