@@ -31,6 +31,13 @@ except ImportError:
     plt = None
 
 try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    np = None
+
+try:
     from utils.plotter import process_file
 except ImportError:
     def process_file(upload_file):
@@ -47,6 +54,186 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 else:
     print("Warning: GEMINI_API_KEY environment variable not set")
+
+def discrete_frechet_distance(curve1, curve2):
+    """
+    Calculate discrete Fréchet distance between two curves using iterative approach
+    """
+    n, m = len(curve1), len(curve2)
+    ca = np.full((n, m), -1.0)
+    
+    # Iterative approach instead of recursive
+    for i in range(n):
+        for j in range(m):
+            d = np.sqrt((curve1[i][0] - curve2[j][0])**2 + (curve1[i][1] - curve2[j][1])**2)
+            
+            if i == 0 and j == 0:
+                ca[i, j] = d
+            elif i > 0 and j == 0:
+                ca[i, j] = max(ca[i-1, 0], d)
+            elif i == 0 and j > 0:
+                ca[i, j] = max(ca[0, j-1], d)
+            else:  # i > 0 and j > 0
+                ca[i, j] = max(min(ca[i-1, j], ca[i-1, j-1], ca[i, j-1]), d)
+    
+    return ca[n-1, m-1]
+
+def calculate_similarity_metrics(baseline_df, sample_df):
+    """
+    Calculate similarity metrics including NSSE and NFD
+    """
+    try:
+        print("=" * 50)
+        print("STARTING SIMILARITY CALCULATION")
+        print(f"Baseline shape: {baseline_df.shape}")
+        print(f"Sample shape: {sample_df.shape}")
+        
+        # Check if numpy is available
+        if not NUMPY_AVAILABLE or np is None:
+            print("ERROR: NumPy not available!")
+            return {
+                "sse": None,
+                "nsse": None,
+                "nsse_similarity_level": None,
+                "frechet_distance": None,
+                "nfd": None,
+                "nfd_similarity_level": None,
+                "rmse": None,
+                "error": "NumPy not available"
+            }
+        
+        # Downsample if datasets are very large
+        max_points = 5000
+        baseline_work = baseline_df.copy()
+        sample_work = sample_df.copy()
+        
+        if len(baseline_df) > max_points:
+            step = len(baseline_df) // max_points
+            baseline_work = baseline_df.iloc[::step].copy()
+            print(f"Baseline downsampled from {len(baseline_df)} to {len(baseline_work)}")
+        
+        if len(sample_df) > max_points:
+            step = len(sample_df) // max_points
+            sample_work = sample_df.iloc[::step].copy()
+            print(f"Sample downsampled from {len(sample_df)} to {len(sample_work)}")
+        
+        # Extract numpy arrays
+        print("Extracting arrays...")
+        baseline_x = baseline_work.iloc[:, 0].to_numpy(dtype=np.float64)
+        baseline_y = baseline_work.iloc[:, 1].to_numpy(dtype=np.float64)
+        sample_x = sample_work.iloc[:, 0].to_numpy(dtype=np.float64)
+        sample_y = sample_work.iloc[:, 1].to_numpy(dtype=np.float64)
+        
+        print(f"Baseline X range: {baseline_x.min():.2f} to {baseline_x.max():.2f}")
+        print(f"Baseline Y range: {baseline_y.min():.4f} to {baseline_y.max():.4f}")
+        print(f"Sample X range: {sample_x.min():.2f} to {sample_x.max():.2f}")
+        print(f"Sample Y range: {sample_y.min():.4f} to {sample_y.max():.4f}")
+        
+        # 1. Sum of Squared Errors (SSE)
+        print("Calculating SSE...")
+        sample_y_interp = np.interp(baseline_x, sample_x, sample_y)
+        sse = float(np.sum((baseline_y - sample_y_interp) ** 2))
+        print(f"SSE: {sse}")
+        
+        # 2. Normalized SSE (NSSE)
+        print("Calculating NSSE...")
+        baseline_variance = float(np.var(baseline_y))
+        print(f"Baseline variance: {baseline_variance}")
+        
+        if baseline_variance > 1e-10:  # Use small threshold instead of 0
+            nsse = sse / (len(baseline_y) * baseline_variance)
+            print(f"NSSE: {nsse}")
+        else:
+            print("WARNING: Baseline variance is too small!")
+            nsse = float('inf')
+        
+        # NSSE Similarity Level (0-100%)
+        if not np.isinf(nsse) and nsse >= 0:
+            nsse_similarity = float(100 * np.exp(-nsse))
+            print(f"NSSE Similarity: {nsse_similarity:.2f}%")
+        else:
+            nsse_similarity = 0.0
+            print("NSSE Similarity: 0% (infinite NSSE)")
+        
+        # 3. Fréchet Distance
+        print("Calculating Fréchet Distance...")
+        max_frechet_points = 500
+        
+        if len(baseline_work) > max_frechet_points:
+            step = max(1, len(baseline_work) // max_frechet_points)
+            baseline_curve = list(zip(baseline_x[::step], baseline_y[::step]))
+        else:
+            baseline_curve = list(zip(baseline_x, baseline_y))
+        
+        if len(sample_work) > max_frechet_points:
+            step = max(1, len(sample_work) // max_frechet_points)
+            sample_curve = list(zip(sample_x[::step], sample_y[::step]))
+        else:
+            sample_curve = list(zip(sample_x, sample_y))
+        
+        print(f"Frechet curve sizes: baseline={len(baseline_curve)}, sample={len(sample_curve)}")
+        
+        frechet_dist = float(discrete_frechet_distance(baseline_curve, sample_curve))
+        print(f"Fréchet distance: {frechet_dist}")
+        
+        # 4. Normalized Fréchet Distance (NFD)
+        print("Calculating NFD...")
+        baseline_x_range = float(np.max(baseline_x) - np.min(baseline_x))
+        baseline_y_range = float(np.max(baseline_y) - np.min(baseline_y))
+        diagonal_length = np.sqrt(baseline_x_range**2 + baseline_y_range**2)
+        
+        print(f"Diagonal length: {diagonal_length}")
+        
+        if diagonal_length > 1e-10:  # Use small threshold instead of 0
+            nfd = frechet_dist / diagonal_length
+            print(f"NFD: {nfd}")
+        else:
+            print("WARNING: Diagonal length is too small!")
+            nfd = float('inf')
+        
+        # NFD Similarity Level (0-100%)
+        if not np.isinf(nfd) and nfd >= 0:
+            nfd_similarity = float(100 * np.exp(-2 * nfd))
+            print(f"NFD Similarity: {nfd_similarity:.2f}%")
+        else:
+            nfd_similarity = 0.0
+            print("NFD Similarity: 0% (infinite NFD)")
+        
+        # Calculate RMSE
+        rmse = float(np.sqrt(sse / len(baseline_y)))
+        print(f"RMSE: {rmse}")
+        
+        result = {
+            "sse": sse,
+            "nsse": nsse if not np.isinf(nsse) else None,
+            "nsse_similarity_level": nsse_similarity,
+            "frechet_distance": frechet_dist,
+            "nfd": nfd if not np.isinf(nfd) else None,
+            "nfd_similarity_level": nfd_similarity,
+            "rmse": rmse
+        }
+        
+        print("CALCULATION COMPLETE!")
+        print(f"Final result: {result}")
+        print("=" * 50)
+        return result
+        
+    except Exception as e:
+        print("=" * 50)
+        print(f"ERROR in calculate_similarity_metrics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 50)
+        return {
+            "sse": None,
+            "nsse": None,
+            "nsse_similarity_level": None,
+            "frechet_distance": None,
+            "nfd": None,
+            "nfd_similarity_level": None,
+            "rmse": None,
+            "error": str(e)
+        }
 
 def generate_graph_image(baseline_df, sample_df, sample_name: str) -> bytes:
     """Generate a graph image for AI analysis"""
@@ -104,6 +291,14 @@ def analyze_data_statistics(baseline_df, sample_df, sample_name: str) -> dict:
             "std_diff": stats["sample_stats"]["std_y"] - stats["baseline_stats"]["std_y"],
             "range_diff": stats["sample_stats"]["max_y"] - stats["sample_stats"]["min_y"] - (stats["baseline_stats"]["max_y"] - stats["baseline_stats"]["min_y"])
         }
+        
+        # Calculate similarity metrics
+        if NUMPY_AVAILABLE:
+            stats["similarity"] = calculate_similarity_metrics(baseline_df, sample_df)
+        else:
+            stats["similarity"] = {
+                "error": "NumPy not available for similarity calculations"
+            }
         
         return stats
     except Exception as e:

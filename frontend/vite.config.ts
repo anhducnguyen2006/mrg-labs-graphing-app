@@ -7,7 +7,15 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/generate_graphs': 'http://localhost:8080',
-      '/static': 'http://localhost:8080'
+      '/static': 'http://localhost:8080',
+      '/analysis': 'http://localhost:8080',
+      '/chat': 'http://localhost:8080'
     }
+  },
+  optimizeDeps: {
+    exclude: ['chunk-YGLZ2JQH']
+  },
+  build: {
+    chunkSizeWarningLimit: 1000
   }
 });
