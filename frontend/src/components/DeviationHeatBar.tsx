@@ -1,6 +1,14 @@
 import React, { useRef } from 'react';
 import { Box, VStack, Text, HStack, Button } from '@chakra-ui/react';
 
+interface RangeWeight {
+  min: number;
+  max: number;
+  weight: number;
+  label: string;
+  key: string;
+}
+
 interface Props {
   x: number[];
   deviation: number[];
@@ -8,6 +16,7 @@ interface Props {
   showGrid?: boolean;
   onResetZoom?: () => void;
   resetKey?: number;
+  abnormalityWeights?: RangeWeight[];
 }
 
 const DeviationHeatBar = React.forwardRef<any, Props>(({ 
@@ -16,7 +25,8 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
   selectedSampleName,
   showGrid = true,
   onResetZoom,
-  resetKey = 0
+  resetKey = 0,
+  abnormalityWeights = []
 }, ref) => {
   const hasData = x.length > 0 && deviation.length > 0;
   
@@ -150,6 +160,53 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
     return segments;
   };
 
+  // Create weight range indicators
+  const createWeightRanges = () => {
+    if (!abnormalityWeights || abnormalityWeights.length === 0) return null;
+
+    const minX = Math.min(...x);
+    const maxX = Math.max(...x);
+    const range = maxX - minX;
+    
+    return abnormalityWeights.map((weightRange, index) => {
+      // Calculate position and width for this range
+      const rangeStart = Math.max(weightRange.min, minX);
+      const rangeEnd = Math.min(weightRange.max, maxX);
+      
+      if (rangeStart >= rangeEnd) return null;
+      
+      // Convert wavelengths to percentages (reverse for IR)
+      const startPercent = ((maxX - rangeEnd) / range) * 100;
+      const endPercent = ((maxX - rangeStart) / range) * 100;
+      const widthPercent = endPercent - startPercent;
+      
+      // Color based on weight intensity
+      const weightIntensity = weightRange.weight / 100;
+      const alpha = 0.2 + (weightIntensity * 0.3); // More weight = more visible
+      
+      const colors = {
+        'range_evaporation': `rgba(255, 99, 71, ${alpha})`, // Tomato
+        'range_other': `rgba(255, 165, 0, ${alpha})`, // Orange  
+        'range_oxidation': `rgba(255, 20, 147, ${alpha})` // Deep pink
+      };
+      
+      const color = colors[weightRange.key as keyof typeof colors] || `rgba(128, 128, 128, ${alpha})`;
+      
+      return (
+        <Box
+          key={index}
+          position="absolute"
+          left={`${startPercent}%`}
+          width={`${widthPercent}%`}
+          height="100%"
+          backgroundColor={color}
+          borderLeft={index > 0 ? "1px solid rgba(0,0,0,0.2)" : undefined}
+          title={`${weightRange.label}: ${weightRange.weight}% weight`}
+        />
+      );
+    }).filter(Boolean);
+  };
+
   return (
     <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
       <VStack align="start" spacing={4}>
@@ -186,6 +243,9 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                 overflow="hidden"
                 bg="white"
               >
+                {/* Weight ranges background */}
+                {createWeightRanges()}
+                {/* Deviation gradient overlay */}
                 {createGradientSegments()}
               </Box>
               
@@ -249,6 +309,44 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                 <Text color="blue.600">{x.length}</Text>
               </Box>
             </HStack>
+
+            {/* Weight Ranges Legend */}
+            {abnormalityWeights && abnormalityWeights.length > 0 && (
+              <Box w="100%" mt={4}>
+                <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                  Applied Weight Ranges
+                </Text>
+                <VStack spacing={2} align="stretch">
+                  {abnormalityWeights.map((range, index) => {
+                    const colors = {
+                      'range_evaporation': 'rgba(255, 99, 71, 0.5)',
+                      'range_other': 'rgba(255, 165, 0, 0.5)', 
+                      'range_oxidation': 'rgba(255, 20, 147, 0.5)'
+                    };
+                    const color = colors[range.key as keyof typeof colors] || 'rgba(128, 128, 128, 0.5)';
+                    
+                    return (
+                      <HStack key={index} spacing={3} fontSize="xs">
+                        <Box
+                          w="20px"
+                          h="12px"
+                          backgroundColor={color}
+                          border="1px solid"
+                          borderColor="gray.300"
+                          borderRadius="sm"
+                        />
+                        <Text flex={1} color="gray.700">
+                          {range.label}
+                        </Text>
+                        <Text fontWeight="semibold" color="blue.600">
+                          {range.weight}%
+                        </Text>
+                      </HStack>
+                    );
+                  })}
+                </VStack>
+              </Box>
+            )}
           </VStack>
         ) : (
           <Text fontSize="sm" color="gray.500">
@@ -262,6 +360,9 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
             <Text fontSize="xs" color="blue.800">
               🔬 <strong>Grease Analysis:</strong> Green areas indicate stable grease condition. 
               Yellow shows moderate oxidation. Red zones highlight critical oxidation points requiring maintenance attention.
+              {abnormalityWeights && abnormalityWeights.length > 0 && 
+                " Colored background regions show applied weight ranges - higher weights amplify deviations in those spectral areas."
+              }
               Hover over the heat bar to see specific wavelength and deviation values.
             </Text>
           </Box>

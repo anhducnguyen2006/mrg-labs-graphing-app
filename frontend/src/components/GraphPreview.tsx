@@ -28,6 +28,14 @@ ChartJS.register(
   zoomPlugin
 );
 
+interface RangeWeight {
+  min: number;
+  max: number;
+  weight: number;
+  label: string;
+  key: string;
+}
+
 interface Props {
   baseline?: ParsedCSV;
   samples: ParsedCSV[];
@@ -35,6 +43,7 @@ interface Props {
   onSelectSample: (name: string) => void;
   baselineFile?: File;
   sampleFiles?: FileList;
+  abnormalityWeights?: RangeWeight[];
 }
 
 const GraphPreview: React.FC<Props> = ({ 
@@ -43,7 +52,8 @@ const GraphPreview: React.FC<Props> = ({
   selectedSampleName, 
   onSelectSample, 
   baselineFile, 
-  sampleFiles 
+  sampleFiles,
+  abnormalityWeights = []
 }) => {
   const chartRef = useRef<any>(null);
   const differenceChartRef = useRef<any>(null);
@@ -110,14 +120,34 @@ const GraphPreview: React.FC<Props> = ({
       d => samples.find(s => s.filename === selectedSampleName)
     ) || sampleDifferences[0];
 
+    // Function to get weight for a given wavelength
+    const getWeightForWavelength = (wavelength: number): number => {
+      if (!abnormalityWeights || abnormalityWeights.length === 0) {
+        return 1.0; // Default weight when no weights are configured
+      }
+
+      for (const range of abnormalityWeights) {
+        if (wavelength >= range.min && wavelength <= range.max) {
+          return range.weight / 100; // Convert percentage to decimal
+        }
+      }
+      return 1.0; // Default weight if wavelength doesn't fall in any range
+    };
+
     const deviation: number[] = [];
 
     for (let i = 0; i < x.length; i++) {
       const xValue = x[i];
       const idx = selectedSampleDiff.x.indexOf(xValue);
       if (idx !== -1) {
-        // Absolute deviation: |difference from average| (no weight for now)
-        deviation.push(Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]));
+        // Calculate base deviation
+        const baseDeviation = Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]);
+        
+        // Apply abnormality weight for this wavelength
+        const weight = getWeightForWavelength(xValue);
+        const weightedDeviation = baseDeviation * weight;
+        
+        deviation.push(weightedDeviation);
       } else {
         deviation.push(0);
       }
@@ -454,6 +484,7 @@ const GraphPreview: React.FC<Props> = ({
             selectedSampleName={selectedSampleName}
             showGrid={showGrid}
             resetKey={differenceResetKey}
+            abnormalityWeights={abnormalityWeights}
           />
         )}
         

@@ -166,6 +166,7 @@ const Dashboard: React.FC = () => {
             onSelectSample={setSelectedSample}
             baselineFile={baselineFile}
             sampleFiles={sampleFiles}
+            abnormalityWeights={abnormalityWeights}
           />
         </VStack>
       </Box>
