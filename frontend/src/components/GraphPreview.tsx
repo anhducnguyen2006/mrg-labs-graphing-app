@@ -1,8 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Box, VStack, Text, HStack, Button } from '@chakra-ui/react';
 import { ParsedCSV } from '../types';
 import GraphSummary from './GraphSummary';
+import DifferenceGraph from './DifferenceGraph';
 import { Line } from 'react-chartjs-2';
+import { Series, diff } from '../lib/series';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -44,6 +46,7 @@ const GraphPreview: React.FC<Props> = ({
   sampleFiles 
 }) => {
   const chartRef = useRef<any>(null);
+  const differenceChartRef = useRef<any>(null);
   const sample = samples.find((s: ParsedCSV) => s.filename === selectedSampleName) || samples[0];
   const hasData = baseline && sample;
   
@@ -51,21 +54,106 @@ const GraphPreview: React.FC<Props> = ({
   const useCustomIntervals = useRef(true);
   // Force re-render trigger
   const [resetKey, setResetKey] = React.useState(0);
-  // Track grid visibility
+  const [differenceResetKey, setDifferenceResetKey] = React.useState(0);
+  // Track grid visibility (synchronized across both graphs)
   const [showGrid, setShowGrid] = React.useState(true);
+
+  // Step 2: Calculate differences and average across all samples
+  const differenceData = useMemo(() => {
+    if (!baseline || samples.length === 0) return null;
+
+    // Convert baseline to Series format
+    const baselineSeries: Series = {
+      name: baseline.filename,
+      points: baseline.x.map((x, i) => ({ x, y: baseline.y[i] }))
+    };
+
+    // Calculate individual differences for each sample vs baseline
+    const sampleDifferences = samples.map(s => {
+      const sampleSeries: Series = {
+        name: s.filename,
+        points: s.x.map((x, i) => ({ x, y: s.y[i] }))
+      };
+      return diff(baselineSeries, sampleSeries);
+    });
+
+    // Calculate average difference across all samples at each x-point
+    // First, find common x-values across all samples
+    if (sampleDifferences.length === 0) return null;
+
+    const firstDiff = sampleDifferences[0];
+    const x = firstDiff.x;
+    const avgDelta: number[] = [];
+
+    // For each x-point, average the deltas across all samples
+    for (let i = 0; i < x.length; i++) {
+      const xValue = x[i];
+      let sum = 0;
+      let count = 0;
+
+      // Sum deltas from all samples at this x-point
+      for (const sampleDiff of sampleDifferences) {
+        const idx = sampleDiff.x.indexOf(xValue);
+        if (idx !== -1) {
+          sum += sampleDiff.delta[idx];
+          count++;
+        }
+      }
+
+      avgDelta.push(count > 0 ? sum / count : 0);
+    }
+
+    // Calculate deviation from average for selected sample
+    // deviation[i] = individual_diff[i] - avg_diff[i]
+    // (Weight multiplication can be added later if needed)
+    const selectedSampleDiff = sampleDifferences.find(
+      d => samples.find(s => s.filename === selectedSampleName)
+    ) || sampleDifferences[0];
+
+    const deviation: number[] = [];
+
+    for (let i = 0; i < x.length; i++) {
+      const xValue = x[i];
+      const idx = selectedSampleDiff.x.indexOf(xValue);
+      if (idx !== -1) {
+        // Absolute deviation: |difference from average| (no weight for now)
+        deviation.push(Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]));
+      } else {
+        deviation.push(0);
+      }
+    }
+
+    return {
+      x,
+      avgDelta,
+      selectedDelta: selectedSampleDiff.delta,
+      deviation,
+      allSampleDifferences: sampleDifferences
+    };
+  }, [baseline, samples, selectedSampleName]);
   // Find the corresponding File object for the selected sample
   const selectedSampleFile = sampleFiles && selectedSampleName ? 
     Array.from(sampleFiles).find(file => file.name === selectedSampleName) : 
     undefined;
 
   const handleResetZoom = () => {
+    // Reset main graph
+    if (chartRef.current) {
+      chartRef.current.resetZoom();
+    }
+    // Reset difference graph
+    if (differenceChartRef.current) {
+      differenceChartRef.current.resetZoom();
+    }
     useCustomIntervals.current = true;
     isZoomedMode.current = false;
-    // Force complete chart re-render by updating key
+    // Force complete chart re-render by updating keys (synchronized)
     setResetKey(prev => prev + 1);
+    setDifferenceResetKey(prev => prev + 1);
   };
 
   const handleToggleGrid = () => {
+    // Toggle grid for both graphs simultaneously
     setShowGrid(prev => !prev);
   };
   
@@ -77,7 +165,20 @@ const GraphPreview: React.FC<Props> = ({
     if (chartRef.current) {
       chartRef.current.update('none');
     }
+    if (differenceChartRef.current) {
+      differenceChartRef.current.update('none');
+    }
   }, [baseline, samples, selectedSampleName]);
+
+  // Synchronize grid toggle across both graphs
+  React.useEffect(() => {
+    if (chartRef.current) {
+      chartRef.current.update('none');
+    }
+    if (differenceChartRef.current) {
+      differenceChartRef.current.update('none');
+    }
+  }, [showGrid]);
 
   // Transform x-values to equal-spaced positions (similar to backend export)
   const customXTicks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550];
@@ -162,24 +263,32 @@ const GraphPreview: React.FC<Props> = ({
 
   return (
     <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
-      <VStack align="start" spacing={3}>
+      <VStack align="start" spacing={4}>
         <HStack justify="space-between" w="100%">
-          <Text fontWeight="bold">Real-time Preview</Text>
+          <Box>
+            <Text fontWeight="bold" fontSize="lg">Spectroscopy Analysis</Text>
+            <Text fontSize="xs" color="gray.600">Interactive graph with synchronized controls</Text>
+          </Box>
           {hasData && (
             <HStack spacing={2}>
               <Button size="sm" onClick={handleToggleGrid} variant="outline">
                 {showGrid ? 'Hide Grid' : 'Show Grid'}
               </Button>
               <Button size="sm" onClick={handleResetZoom} variant="outline">
-                Reset Zoom
+                Reset All Zoom
               </Button>
             </HStack>
           )}
         </HStack>
 
+        {/* Main Spectroscopy Graph */}
         {hasData ? (
-          <Box w="100%" h="400px">
-            <Line key={resetKey} ref={chartRef} data={data!} options={{
+          <Box w="100%">
+            <Text fontWeight="semibold" fontSize="sm" mb={2} color="gray.700">
+              📈 Main Graph: Baseline vs Sample
+            </Text>
+            <Box w="100%" h="400px">
+              <Line key={resetKey} ref={chartRef} data={data!} options={{
               responsive: true,
               maintainAspectRatio: false,
               animation: false,
@@ -330,9 +439,22 @@ const GraphPreview: React.FC<Props> = ({
                 }
               }
             }} />
+            </Box>
           </Box>
         ) : (
           <Text fontSize="sm" color="gray.500">Upload baseline and at least one sample to see preview.</Text>
+        )}
+        
+        {/* Difference Graph - Shows deviation from average */}
+        {differenceData && (
+          <DifferenceGraph
+            ref={differenceChartRef}
+            x={differenceData.x}
+            deviation={differenceData.deviation}
+            selectedSampleName={selectedSampleName}
+            showGrid={showGrid}
+            resetKey={differenceResetKey}
+          />
         )}
         
         {/* AI-Powered Graph Summary */}
