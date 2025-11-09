@@ -12,20 +12,17 @@ import {
     useColorModeValue,
     IconButton,
 } from '@chakra-ui/react';
-import { User } from '../types';
+import { User } from '../services/auth';
+import UserBackground from './UserBackground';
 
 interface UserProfileMenuProps {
-    user?: User;
+    user?: User | null;
     onChangePasswordClick?: () => void;
     onLogoutClick?: () => void;
 }
 
 const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
-    user = {
-        name: 'John Doe',
-        email: 'john@example.com',
-        avatarUrl: undefined,
-    },
+    user,
     onChangePasswordClick = () => console.log('Change Password clicked'),
     onLogoutClick = () => console.log('Logout clicked'),
 }) => {
@@ -43,17 +40,26 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                         as={IconButton}
                         aria-label="User menu"
                         icon={
-                            <Avatar
-                                size="sm"
-                                name={user.name}
-                                src={user.avatarUrl}
+                            <Box
+                                position="relative"
+                                w="32px"
+                                h="32px"
+                                borderRadius="full"
+                                overflow="hidden"
                                 cursor="pointer"
                                 transition="all 0.2s"
                                 _hover={{
                                     transform: 'scale(1.05)',
                                     boxShadow: 'lg',
                                 }}
-                            />
+                            >
+                                <UserBackground
+                                    width="100%"
+                                    height="100%"
+                                    borderRadius="full"
+                                    defaultGradient="linear(to-r, blue.400, purple.500)"
+                                />
+                            </Box>
                         }
                         variant="ghost"
                         _hover={{ bg: 'transparent' }}
@@ -96,14 +102,14 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                                     fontSize="sm"
                                     color={textColor}
                                 >
-                                    {user.name}
+                                    {user?.username || 'User'}
                                 </Text>
                                 <Text
                                     fontSize="xs"
                                     color={subtleTextColor}
                                     noOfLines={1}
                                 >
-                                    {user.email}
+                                    {user?.id ? `ID: ${user.id}` : 'Welcome!'}
                                 </Text>
                             </VStack>
                         </Box>

@@ -17,12 +17,15 @@ import {
   MenuItem,
   MenuDivider,
   Badge,
-  Flex
+  Flex,
+  Collapse,
+  useDisclosure
 } from '@chakra-ui/react';
-import { SearchIcon, SmallCloseIcon, ChevronDownIcon } from '@chakra-ui/icons';
+import { SearchIcon, SmallCloseIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { FiHeart, FiArrowUp, FiArrowDown } from 'react-icons/fi';
-import { FaHeart, FaSortAlphaDown, FaSortAlphaUp, FaHeart as FaHeartFilled } from 'react-icons/fa';
+import { FaHeart, FaSortAlphaDown, FaSortAlphaUp, FaHeart as FaHeartFilled, FaSortNumericDown, FaSortNumericUp } from 'react-icons/fa';
 import { ParsedCSV } from '../types';
+import CriticalSamplesAlert from './CriticalSamplesAlert';
 
 interface Props {
   samples: ParsedCSV[];
@@ -30,19 +33,27 @@ interface Props {
   onSelectSample: (name: string) => void;
   onRemoveSample: (name: string) => void;
   onToggleFavorite: (filename: string) => void;
+  sampleScores?: { [filename: string]: number };
 }
 
-type SortOption = 'name-asc' | 'name-desc' | 'favorites' | 'date-added';
+type SortOption = 'name-asc' | 'name-desc' | 'favorites' | 'date-added' | 'score-desc' | 'score-asc';
+type FilterOption = 'all' | 'green' | 'yellow' | 'red';
 
 const SampleSidebar: React.FC<Props> = ({
   samples,
   selectedSampleName,
   onSelectSample,
   onRemoveSample,
-  onToggleFavorite
+  onToggleFavorite,
+  sampleScores = {}
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+  const [filterBy, setFilterBy] = useState<FilterOption>('all');
+
+  // Collapsible controls
+  const { isOpen: isAlertsOpen, onToggle: onToggleAlerts } = useDisclosure({ defaultIsOpen: true });
+  const { isOpen: isFiltersOpen, onToggle: onToggleFilters } = useDisclosure({ defaultIsOpen: true });
 
   const getSortLabel = (sortOption: SortOption) => {
     switch (sortOption) {
@@ -50,24 +61,48 @@ const SampleSidebar: React.FC<Props> = ({
       case 'name-desc': return 'Name (Z-A)';
       case 'favorites': return 'Favorites First';
       case 'date-added': return 'Recently Added';
+      case 'score-desc': return 'Best Score First';
+      case 'score-asc': return 'Worst Score First';
       default: return 'Name (A-Z)';
     }
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 90) return 'green';
+    if (score >= 70) return 'yellow';
+    return 'red';
+  };
+
+  const getScoreCategory = (score: number): FilterOption => {
+    if (score >= 90) return 'green';
+    if (score >= 70) return 'yellow';
+    return 'red';
   };
 
   const getSortIcon = (sortOption: SortOption) => {
     switch (sortOption) {
       case 'name-asc': return <FaSortAlphaDown />;
       case 'name-desc': return <FaSortAlphaUp />;
-      case 'favorites': return <FaHeartFilled color="red.500" />;
+      case 'favorites': return <FaHeartFilled color="#E53E3E" />;
       case 'date-added': return <FiArrowDown />;
+      case 'score-desc': return <FiArrowDown />;
+      case 'score-asc': return <FiArrowUp />;
       default: return <FaSortAlphaDown />;
     }
   };
 
   const filteredAndSortedSamples = useMemo(() => {
-    const filtered = samples.filter(sample =>
+    let filtered = samples.filter(sample =>
       sample.filename.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Apply score filter
+    if (filterBy !== 'all') {
+      filtered = filtered.filter(sample => {
+        const score = sampleScores[sample.filename] ?? 0;
+        return getScoreCategory(score) === filterBy;
+      });
+    }
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
@@ -88,6 +123,18 @@ const SampleSidebar: React.FC<Props> = ({
           const aIndex = samples.indexOf(a);
           const bIndex = samples.indexOf(b);
           return bIndex - aIndex;
+
+        case 'score-desc':
+          // Sort by score (highest first)
+          const scoreA = sampleScores[a.filename] ?? 0;
+          const scoreB = sampleScores[b.filename] ?? 0;
+          return scoreB - scoreA;
+
+        case 'score-asc':
+          // Sort by score (lowest first)
+          const scoreA2 = sampleScores[a.filename] ?? 0;
+          const scoreB2 = sampleScores[b.filename] ?? 0;
+          return scoreA2 - scoreB2;
         
         case 'name-asc':
         default:
@@ -95,7 +142,7 @@ const SampleSidebar: React.FC<Props> = ({
           return a.filename.localeCompare(b.filename);
       }
     });
-  }, [samples, searchTerm, sortBy]);
+  }, [samples, searchTerm, sortBy, filterBy, sampleScores]);
 
   return (
     <Box
@@ -105,134 +152,257 @@ const SampleSidebar: React.FC<Props> = ({
       borderRight="1px"
       borderColor="gray.200"
       p={4}
+      display="flex"
+      flexDirection="column"
     >
-      <VStack align="start" spacing={4}>
+      <VStack align="start" spacing={4} flex={1} h="100%">
         {/* Sample Files Section */}
         <Text fontSize="lg" fontWeight="bold">Sample Files</Text>
 
-        <VStack w="100%" spacing={3}>
-          <InputGroup>
-            <InputLeftElement pointerEvents="none">
-              <SearchIcon color="gray.300" />
-            </InputLeftElement>
-            <Input
-              placeholder="Search samples..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              bg="white"
-              borderRadius="md"
-              border="1px solid"
-              borderColor="gray.200"
-              _focus={{ 
-                borderColor: "blue.400",
-                boxShadow: "0 0 0 1px blue.400"
-              }}
-            />
-          </InputGroup>
-
-          <Box w="100%">
-            <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
-              Sort Options
+        {/* Critical Samples Alert - Collapsible */}
+        <Box w="100%">
+          <HStack justify="space-between" align="center" mb={2}>
+            <Text fontSize="md" fontWeight="semibold" color="red.600">
+              🚨 Critical Alerts
             </Text>
-            <Menu>
-              <MenuButton
-                as={Button}
-                rightIcon={<ChevronDownIcon />}
-                leftIcon={getSortIcon(sortBy)}
-                size="sm"
-                w="100%"
-                justifyContent="space-between"
-                bg="white"
-                border="1px solid"
-                borderColor="gray.200"
-                _hover={{ 
-                  borderColor: "gray.300",
-                  bg: "gray.50"
-                }}
-                _active={{ 
-                  bg: "gray.100" 
-                }}
-                fontWeight="normal"
-              >
-                <Text fontSize="sm" noOfLines={1}>
-                  {getSortLabel(sortBy)}
-                </Text>
-              </MenuButton>
-              <MenuList
-                bg="white"
-                border="1px solid"
-                borderColor="gray.200"
-                boxShadow="lg"
-                borderRadius="md"
-                py={2}
-                minW="200px"
-              >
-                <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
-                  ALPHABETICAL
-                </Text>
-                <MenuItem
-                  icon={<FaSortAlphaDown />}
-                  onClick={() => setSortBy('name-asc')}
-                  bg={sortBy === 'name-asc' ? 'blue.50' : 'transparent'}
-                  color={sortBy === 'name-asc' ? 'blue.700' : 'gray.700'}
-                  fontWeight={sortBy === 'name-asc' ? 'semibold' : 'normal'}
-                  _hover={{ bg: 'gray.50' }}
-                  borderRadius="md"
-                  mx={2}
-                >
-                  Name (A → Z)
-                </MenuItem>
-                <MenuItem
-                  icon={<FaSortAlphaUp />}
-                  onClick={() => setSortBy('name-desc')}
-                  bg={sortBy === 'name-desc' ? 'blue.50' : 'transparent'}
-                  color={sortBy === 'name-desc' ? 'blue.700' : 'gray.700'}
-                  fontWeight={sortBy === 'name-desc' ? 'semibold' : 'normal'}
-                  _hover={{ bg: 'gray.50' }}
-                  borderRadius="md"
-                  mx={2}
-                >
-                  Name (Z → A)
-                </MenuItem>
+            <IconButton
+              aria-label={isAlertsOpen ? "Collapse alerts" : "Expand alerts"}
+              icon={isAlertsOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              size="sm"
+              variant="ghost"
+              onClick={onToggleAlerts}
+            />
+          </HStack>
+          <Collapse in={isAlertsOpen} animateOpacity>
+            <CriticalSamplesAlert 
+              sampleScores={sampleScores}
+              onSampleSelect={onSelectSample}
+            />
+          </Collapse>
+        </Box>
 
-                <MenuDivider />
+        {/* Search and Filters - Always visible */}
+        <InputGroup>
+          <InputLeftElement pointerEvents="none">
+            <SearchIcon color="gray.300" />
+          </InputLeftElement>
+          <Input
+            placeholder="Search samples..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            bg="white"
+            borderRadius="md"
+            border="1px solid"
+            borderColor="gray.200"
+            _focus={{ 
+              borderColor: "blue.400",
+              boxShadow: "0 0 0 1px blue.400"
+            }}
+          />
+        </InputGroup>
 
-                <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
-                  BY PRIORITY
+        {/* Collapsible Filter Controls */}
+        <Box w="100%">
+          <HStack justify="space-between" align="center" mb={2}>
+            <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+              Filters & Sort
+            </Text>
+            <IconButton
+              aria-label={isFiltersOpen ? "Collapse filters" : "Expand filters"}
+              icon={isFiltersOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              size="sm"
+              variant="ghost"
+              onClick={onToggleFilters}
+            />
+          </HStack>
+          <Collapse in={isFiltersOpen} animateOpacity>
+            <VStack w="100%" spacing={3}>
+              {/* Filter Controls */}
+              {sampleScores && Object.keys(sampleScores).length > 0 && (
+                <Box w="100%">
+                  <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={2}>
+                    Anomaly Filter
+                  </Text>
+                  <HStack spacing={2} w="100%">
+                    <Button
+                      size="xs"
+                      leftIcon={<Box w={2} h={2} bg="green.500" borderRadius="full" />}
+                      variant={filterBy === 'green' ? 'solid' : 'outline'}
+                      colorScheme={filterBy === 'green' ? 'green' : 'gray'}
+                      onClick={() => setFilterBy(filterBy === 'green' ? 'all' : 'green')}
+                      flex={1}
+                      fontSize="xs"
+                    >
+                      Good ({samples.filter(s => sampleScores[s.filename] >= 90).length})
+                    </Button>
+                    <Button
+                      size="xs"
+                      leftIcon={<Box w={2} h={2} bg="yellow.500" borderRadius="full" />}
+                      variant={filterBy === 'yellow' ? 'solid' : 'outline'}
+                      colorScheme={filterBy === 'yellow' ? 'yellow' : 'gray'}
+                      onClick={() => setFilterBy(filterBy === 'yellow' ? 'all' : 'yellow')}
+                      flex={1}
+                      fontSize="xs"
+                    >
+                      Warning ({samples.filter(s => {
+                        const score = sampleScores[s.filename];
+                        return score >= 70 && score < 90;
+                      }).length})
+                    </Button>
+                    <Button
+                      size="xs"
+                      leftIcon={<Box w={2} h={2} bg="red.500" borderRadius="full" />}
+                      variant={filterBy === 'red' ? 'solid' : 'outline'}
+                      colorScheme={filterBy === 'red' ? 'red' : 'gray'}
+                      onClick={() => setFilterBy(filterBy === 'red' ? 'all' : 'red')}
+                      flex={1}
+                      fontSize="xs"
+                    >
+                      Critical ({samples.filter(s => sampleScores[s.filename] < 70).length})
+                    </Button>
+                  </HStack>
+                </Box>
+              )}
+
+              <Box w="100%">
+                <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
+                  Sort Options
                 </Text>
-                <MenuItem
-                  icon={<FaHeartFilled color="#E53E3E" />}
-                  onClick={() => setSortBy('favorites')}
-                  bg={sortBy === 'favorites' ? 'blue.50' : 'transparent'}
-                  color={sortBy === 'favorites' ? 'blue.700' : 'gray.700'}
-                  fontWeight={sortBy === 'favorites' ? 'semibold' : 'normal'}
-                  _hover={{ bg: 'gray.50' }}
-                  borderRadius="md"
-                  mx={2}
-                >
-                  <Flex align="center" justify="space-between" w="100%">
-                    Favorites First
-                    <Badge colorScheme="red" size="sm" ml={2}>
-                      {samples.filter(s => s.isFavorite).length}
-                    </Badge>
-                  </Flex>
-                </MenuItem>
-                <MenuItem
-                  icon={<FiArrowDown />}
-                  onClick={() => setSortBy('date-added')}
-                  bg={sortBy === 'date-added' ? 'blue.50' : 'transparent'}
-                  color={sortBy === 'date-added' ? 'blue.700' : 'gray.700'}
-                  fontWeight={sortBy === 'date-added' ? 'semibold' : 'normal'}
-                  _hover={{ bg: 'gray.50' }}
-                  borderRadius="md"
-                  mx={2}
-                >
-                  Recently Added
-                </MenuItem>
-              </MenuList>
-            </Menu>
-          </Box>
-        </VStack>
+                <Menu>
+                  <MenuButton
+                    as={Button}
+                    rightIcon={<ChevronDownIcon />}
+                    leftIcon={getSortIcon(sortBy)}
+                    size="sm"
+                    w="100%"
+                    justifyContent="space-between"
+                    bg="white"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    _hover={{ 
+                      borderColor: "gray.300",
+                      bg: "gray.50"
+                    }}
+                    _active={{ 
+                      bg: "gray.100" 
+                    }}
+                    fontWeight="normal"
+                  >
+                    <Text fontSize="sm" noOfLines={1}>
+                      {getSortLabel(sortBy)}
+                    </Text>
+                  </MenuButton>
+                  <MenuList
+                    bg="white"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    boxShadow="lg"
+                    borderRadius="md"
+                    py={2}
+                    minW="200px"
+                  >
+                    <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                      ALPHABETICAL
+                    </Text>
+                    <MenuItem
+                      icon={<FaSortAlphaDown />}
+                      onClick={() => setSortBy('name-asc')}
+                      bg={sortBy === 'name-asc' ? 'blue.50' : 'transparent'}
+                      color={sortBy === 'name-asc' ? 'blue.700' : 'gray.700'}
+                      fontWeight={sortBy === 'name-asc' ? 'semibold' : 'normal'}
+                      _hover={{ bg: 'gray.50' }}
+                      borderRadius="md"
+                      mx={2}
+                    >
+                      Name (A → Z)
+                    </MenuItem>
+                    <MenuItem
+                      icon={<FaSortAlphaUp />}
+                      onClick={() => setSortBy('name-desc')}
+                      bg={sortBy === 'name-desc' ? 'blue.50' : 'transparent'}
+                      color={sortBy === 'name-desc' ? 'blue.700' : 'gray.700'}
+                      fontWeight={sortBy === 'name-desc' ? 'semibold' : 'normal'}
+                      _hover={{ bg: 'gray.50' }}
+                      borderRadius="md"
+                      mx={2}
+                    >
+                      Name (Z → A)
+                    </MenuItem>
+
+                    <MenuDivider />
+
+                    <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                      BY PRIORITY
+                    </Text>
+                    <MenuItem
+                      icon={<FaHeartFilled color="#E53E3E" />}
+                      onClick={() => setSortBy('favorites')}
+                      bg={sortBy === 'favorites' ? 'blue.50' : 'transparent'}
+                      color={sortBy === 'favorites' ? 'blue.700' : 'gray.700'}
+                      fontWeight={sortBy === 'favorites' ? 'semibold' : 'normal'}
+                      _hover={{ bg: 'gray.50' }}
+                      borderRadius="md"
+                      mx={2}
+                    >
+                      <Flex align="center" justify="space-between" w="100%">
+                        Favorites First
+                        <Badge colorScheme="red" size="sm" ml={2}>
+                          {samples.filter(s => s.isFavorite).length}
+                        </Badge>
+                      </Flex>
+                    </MenuItem>
+                    <MenuItem
+                      icon={<FiArrowDown />}
+                      onClick={() => setSortBy('date-added')}
+                      bg={sortBy === 'date-added' ? 'blue.50' : 'transparent'}
+                      color={sortBy === 'date-added' ? 'blue.700' : 'gray.700'}
+                      fontWeight={sortBy === 'date-added' ? 'semibold' : 'normal'}
+                      _hover={{ bg: 'gray.50' }}
+                      borderRadius="md"
+                      mx={2}
+                    >
+                      Recently Added
+                    </MenuItem>
+
+                    {/* Score Sorting - Only show if scores are available */}
+                    {sampleScores && Object.keys(sampleScores).length > 0 && (
+                      <>
+                        <MenuDivider />
+                        <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                          ANOMALY SCORE
+                        </Text>
+                        <MenuItem
+                          icon={<FaSortNumericDown />}
+                          onClick={() => setSortBy('score-desc')}
+                          bg={sortBy === 'score-desc' ? 'blue.50' : 'transparent'}
+                          color={sortBy === 'score-desc' ? 'blue.700' : 'gray.700'}
+                          fontWeight={sortBy === 'score-desc' ? 'semibold' : 'normal'}
+                          _hover={{ bg: 'gray.50' }}
+                          borderRadius="md"
+                          mx={2}
+                        >
+                          Highest Score First
+                        </MenuItem>
+                        <MenuItem
+                          icon={<FaSortNumericUp />}
+                          onClick={() => setSortBy('score-asc')}
+                          bg={sortBy === 'score-asc' ? 'blue.50' : 'transparent'}
+                          color={sortBy === 'score-asc' ? 'blue.700' : 'gray.700'}
+                          fontWeight={sortBy === 'score-asc' ? 'semibold' : 'normal'}
+                          _hover={{ bg: 'gray.50' }}
+                          borderRadius="md"
+                          mx={2}
+                        >
+                          Lowest Score First
+                        </MenuItem>
+                      </>
+                    )}
+                  </MenuList>
+                </Menu>
+              </Box>
+            </VStack>
+          </Collapse>
+        </Box>
 
         {/* Results Summary */}
         {samples.length > 0 && (
@@ -249,7 +419,7 @@ const SampleSidebar: React.FC<Props> = ({
           </Flex>
         )}
 
-        <Box w="100%" flex={1} overflowY="auto">
+        <Box w="100%" flex={1} overflowY="auto" minH={0}>
           <List spacing={2}>
             {filteredAndSortedSamples.map((sample, index) => (
               <ListItem key={sample.filename}>
@@ -306,6 +476,18 @@ const SampleSidebar: React.FC<Props> = ({
                       >
                         {sample.filename}
                       </Text>
+                      {/* Score Badge */}
+                      {sampleScores && sampleScores[sample.filename] !== undefined && (
+                        <Badge
+                          colorScheme={getScoreColor(sampleScores[sample.filename])}
+                          size="sm"
+                          fontSize="xs"
+                          fontWeight="bold"
+                          ml={2}
+                        >
+                          {Math.round(sampleScores[sample.filename])}
+                        </Badge>
+                      )}
                     </Flex>
                     <Text fontSize="xs" color="gray.500">
                       {sample.x?.length || 0} data points

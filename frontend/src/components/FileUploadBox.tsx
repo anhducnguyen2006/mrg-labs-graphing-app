@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { Box, Text, Input, VStack, HStack, Tag, Button } from '@chakra-ui/react';
+import { Box, Text, Input, VStack, HStack, Tag, Button, IconButton, Collapse, useDisclosure } from '@chakra-ui/react';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { ParsedCSV } from '../types';
 
 interface Props {
@@ -17,6 +18,7 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
   const [accumulatedFiles, setAccumulatedFiles] = useState<File[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true });
 
   const processFiles = (files: FileList | null) => {
     if (!files || files.length === 0) {
@@ -153,20 +155,32 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
     >
       <VStack align="start" spacing={3}>
         <HStack justify="space-between" w="100%">
-          <Text fontWeight="bold">{label}</Text>
-          {multiple && fileNames.length > 0 && (
-            <Text fontSize="sm" color="gray.600">
-              {fileNames.length} file{fileNames.length !== 1 ? 's' : ''}
-            </Text>
-          )}
+          <HStack>
+            <Text fontWeight="bold">{label}</Text>
+            {multiple && fileNames.length > 0 && (
+              <Text fontSize="sm" color="gray.600">
+                ({fileNames.length} file{fileNames.length !== 1 ? 's' : ''})
+              </Text>
+            )}
+          </HStack>
+          <IconButton
+            aria-label={isOpen ? "Collapse" : "Expand"}
+            icon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            size="sm"
+            variant="ghost"
+            onClick={onToggle}
+          />
         </HStack>
-        <Input ref={fileInputRef} type="file" multiple={multiple} accept=".csv" onChange={handleChange} />
-        {!fileNames.length && (
-          <Text fontSize="sm" color="gray.500" textAlign="center">
-            Drag and drop CSV files here, or use the button above to select files
-          </Text>
-        )}
-        {error && <Text color="red.500" fontSize="sm">{error}</Text>}
+        
+        <Collapse in={isOpen} animateOpacity>
+          <VStack align="start" spacing={3} w="100%">
+            <Input ref={fileInputRef} type="file" multiple={multiple} accept=".csv" onChange={handleChange} />
+            {!fileNames.length && (
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                Drag and drop CSV files here, or use the button above to select files
+              </Text>
+            )}
+            {error && <Text color="red.500" fontSize="sm">{error}</Text>}
         
         {isDragOver && (
           <Box
@@ -193,52 +207,55 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
             </Text>
           </Box>
         )}
-        <HStack wrap="wrap">
-          {fileNames.map((fn: string) => (
-            <Tag key={fn} colorScheme={acceptBaseline ? 'green' : 'blue'} variant="solid">
-              {fn}
-              {multiple && (
-                <Button
-                  size="xs"
-                  ml={2}
-                  variant="ghost"
-                  color="white"
-                  _hover={{ bg: 'whiteAlpha.300' }}
-                  onClick={() => {
-                    const newParsed = accumulatedParsed.filter((p: ParsedCSV) => p.filename !== fn);
-                    const newFiles = accumulatedFiles.filter((f: File) => f.name !== fn);
-                    const newFileNames = newParsed.map((p: ParsedCSV) => p.filename);
-                    
-                    setAccumulatedParsed(newParsed);
-                    setAccumulatedFiles(newFiles);
-                    setFileNames(newFileNames);
+            
+            <HStack wrap="wrap">
+              {fileNames.map((fn: string) => (
+                <Tag key={fn} colorScheme={acceptBaseline ? 'green' : 'blue'} variant="solid">
+                  {fn}
+                  {multiple && (
+                    <Button
+                      size="xs"
+                      ml={2}
+                      variant="ghost"
+                      color="white"
+                      _hover={{ bg: 'whiteAlpha.300' }}
+                      onClick={() => {
+                        const newParsed = accumulatedParsed.filter((p: ParsedCSV) => p.filename !== fn);
+                        const newFiles = accumulatedFiles.filter((f: File) => f.name !== fn);
+                        const newFileNames = newParsed.map((p: ParsedCSV) => p.filename);
+                        
+                        setAccumulatedParsed(newParsed);
+                        setAccumulatedFiles(newFiles);
+                        setFileNames(newFileNames);
 
-                    // If no files left, clear the input
-                    if (newFiles.length === 0 && fileInputRef.current) {
-                      fileInputRef.current.value = '';
-                    }
+                        // If no files left, clear the input
+                        if (newFiles.length === 0 && fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
 
-                    const combinedFileList = new DataTransfer();
-                    newFiles.forEach((file: File) => combinedFileList.items.add(file));
-                    onFilesParsed(newParsed, combinedFileList.files);
-                  }}
-                >
-                  ×
-                </Button>
-              )}
-            </Tag>
-          ))}
-        </HStack>
-        {fileNames.length > 0 && <Button size="sm" onClick={() => {
-          setFileNames([]);
-          setAccumulatedParsed([]);
-          setAccumulatedFiles([]);
-          // Clear the file input element
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          onFilesParsed([], new DataTransfer().files);
-        }}>Clear All</Button>}
+                        const combinedFileList = new DataTransfer();
+                        newFiles.forEach((file: File) => combinedFileList.items.add(file));
+                        onFilesParsed(newParsed, combinedFileList.files);
+                      }}
+                    >
+                      ×
+                    </Button>
+                  )}
+                </Tag>
+              ))}
+            </HStack>
+            {fileNames.length > 0 && <Button size="sm" onClick={() => {
+              setFileNames([]);
+              setAccumulatedParsed([]);
+              setAccumulatedFiles([]);
+              // Clear the file input element
+              if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+              }
+              onFilesParsed([], new DataTransfer().files);
+            }}>Clear All</Button>}
+          </VStack>
+        </Collapse>
       </VStack>
     </Box>
   );

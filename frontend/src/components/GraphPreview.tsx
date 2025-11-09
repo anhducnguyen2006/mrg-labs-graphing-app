@@ -29,6 +29,14 @@ ChartJS.register(
   zoomPlugin
 );
 
+interface RangeWeight {
+  min: number;
+  max: number;
+  weight: number;
+  label: string;
+  key: string;
+}
+
 interface Props {
   baseline?: ParsedCSV;
   samples: ParsedCSV[];
@@ -36,6 +44,8 @@ interface Props {
   onSelectSample: (name: string) => void;
   baselineFile?: File;
   sampleFiles?: FileList;
+  abnormalityWeights?: RangeWeight[];
+  onScoreUpdate?: (scores: { [filename: string]: number }) => void;
 }
 
 const GraphPreview: React.FC<Props> = ({ 
@@ -44,7 +54,9 @@ const GraphPreview: React.FC<Props> = ({
   selectedSampleName, 
   onSelectSample, 
   baselineFile, 
-  sampleFiles 
+  sampleFiles,
+  abnormalityWeights = [],
+  onScoreUpdate
 }) => {
   const chartRef = useRef<any>(null);
   const differenceChartRef = useRef<any>(null);
@@ -58,6 +70,20 @@ const GraphPreview: React.FC<Props> = ({
   const [differenceResetKey, setDifferenceResetKey] = React.useState(0);
   // Track grid visibility (synchronized across both graphs)
   const [showGrid, setShowGrid] = React.useState(true);
+
+  // Function to get weight for a given wavelength
+  const getWeightForWavelength = (wavelength: number): number => {
+    if (!abnormalityWeights || abnormalityWeights.length === 0) {
+      return 1.0; // Default weight when no weights are configured
+    }
+
+    for (const range of abnormalityWeights) {
+      if (wavelength >= range.min && wavelength <= range.max) {
+        return range.weight / 100; // Convert percentage to decimal
+      }
+    }
+    return 1.0; // Default weight if wavelength doesn't fall in any range
+  };
 
   // Step 2: Calculate differences and average across all samples
   const differenceData = useMemo(() => {
@@ -105,11 +131,11 @@ const GraphPreview: React.FC<Props> = ({
     }
 
     // Calculate deviation from average for selected sample
-    // deviation[i] = individual_diff[i] - avg_diff[i]
-    // (Weight multiplication can be added later if needed)
-    const selectedSampleDiff = sampleDifferences.find(
-      d => samples.find(s => s.filename === selectedSampleName)
-    ) || sampleDifferences[0];
+    // Find the index of the selected sample
+    const selectedSampleIndex = selectedSampleName 
+      ? samples.findIndex(s => s.filename === selectedSampleName)
+      : 0;
+    const selectedSampleDiff = sampleDifferences[selectedSampleIndex >= 0 ? selectedSampleIndex : 0];
 
     const deviation: number[] = [];
 
@@ -117,8 +143,14 @@ const GraphPreview: React.FC<Props> = ({
       const xValue = x[i];
       const idx = selectedSampleDiff.x.indexOf(xValue);
       if (idx !== -1) {
-        // Absolute deviation: |difference from average| (no weight for now)
-        deviation.push(Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]));
+        // Calculate base deviation
+        const baseDeviation = Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]);
+        
+        // Apply abnormality weight for this wavelength
+        const weight = getWeightForWavelength(xValue);
+        const weightedDeviation = baseDeviation * weight;
+        
+        deviation.push(weightedDeviation);
       } else {
         deviation.push(0);
       }
@@ -131,7 +163,67 @@ const GraphPreview: React.FC<Props> = ({
       deviation,
       allSampleDifferences: sampleDifferences
     };
-  }, [baseline, samples, selectedSampleName]);
+  }, [baseline, samples, selectedSampleName, abnormalityWeights]);
+
+  // Calculate anomaly scores for all samples (0-100, higher is better)
+  const sampleScores = useMemo(() => {
+    if (!baseline || samples.length === 0 || !differenceData) return {};
+
+    const scores: { [filename: string]: number } = {};
+
+    // Convert baseline to Series format
+    const baselineSeries: Series = {
+      name: baseline.filename,
+      points: baseline.x.map((x, i) => ({ x, y: baseline.y[i] }))
+    };
+
+    // Calculate score for each sample
+    samples.forEach(sample => {
+      const sampleSeries: Series = {
+        name: sample.filename,
+        points: sample.x.map((x, i) => ({ x, y: sample.y[i] }))
+      };
+
+      const sampleDiff = diff(baselineSeries, sampleSeries);
+      const { x: diffX, delta } = sampleDiff;
+
+      // Calculate weighted deviations for scoring
+      let totalWeightedDeviation = 0;
+      let totalPoints = 0;
+
+      for (let i = 0; i < diffX.length; i++) {
+        const wavelength = diffX[i];
+        const deviation = Math.abs(delta[i]);
+        
+        // Apply weight for this wavelength
+        const weight = getWeightForWavelength(wavelength);
+        const weightedDeviation = deviation * weight;
+        
+        totalWeightedDeviation += weightedDeviation;
+        totalPoints++;
+      }
+
+      // Calculate average weighted deviation
+      const avgWeightedDeviation = totalPoints > 0 ? totalWeightedDeviation / totalPoints : 0;
+
+      // Convert to score (0-100, where lower deviation = higher score)
+      // Use exponential decay to make scoring more sensitive to high deviations
+      const normalizedDeviation = Math.min(avgWeightedDeviation / 0.1, 10); // Cap at 10x normal
+      const score = Math.max(0, Math.min(100, 100 * Math.exp(-normalizedDeviation * 0.5)));
+
+      scores[sample.filename] = Math.round(score);
+    });
+
+    return scores;
+  }, [baseline, samples, abnormalityWeights, differenceData]);
+
+  // Update parent component with scores when they change
+  React.useEffect(() => {
+    if (onScoreUpdate) {
+      onScoreUpdate(sampleScores);
+    }
+  }, [sampleScores, onScoreUpdate]);
+
   // Find the corresponding File object for the selected sample
   const selectedSampleFile = sampleFiles && selectedSampleName ? 
     Array.from(sampleFiles).find(file => file.name === selectedSampleName) : 
@@ -478,6 +570,7 @@ const GraphPreview: React.FC<Props> = ({
             selectedSampleName={selectedSampleName}
             showGrid={showGrid}
             resetKey={differenceResetKey}
+            abnormalityWeights={abnormalityWeights}
           />
         )}
         
