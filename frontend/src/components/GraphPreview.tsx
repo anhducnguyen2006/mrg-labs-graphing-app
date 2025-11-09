@@ -2,7 +2,7 @@ import React, { useRef, useMemo } from 'react';
 import { Box, VStack, Text, HStack, Button } from '@chakra-ui/react';
 import { ParsedCSV } from '../types';
 import GraphSummary from './GraphSummary';
-import DifferenceGraph from './DifferenceGraph';
+import DeviationHeatBar from './DeviationHeatBar';
 import { Line } from 'react-chartjs-2';
 import { Series, diff } from '../lib/series';
 import {
@@ -445,9 +445,9 @@ const GraphPreview: React.FC<Props> = ({
           <Text fontSize="sm" color="gray.500">Upload baseline and at least one sample to see preview.</Text>
         )}
         
-        {/* Difference Graph - Shows deviation from average */}
+        {/* Deviation Heat Bar - Shows oxidation intensity */}
         {differenceData && (
-          <DifferenceGraph
+          <DeviationHeatBar
             ref={differenceChartRef}
             x={differenceData.x}
             deviation={differenceData.deviation}
