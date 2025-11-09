@@ -202,25 +202,14 @@ const GraphPreview: React.FC<Props> = ({
     });
   };
 
-  // Calculate dynamic y-axis max
+  // Calculate dynamic y-axis max rounded up to nearest 0.5
   const getYMax = () => {
     if (!hasData) return 6;
     const maxBaseline = Math.max(...baseline!.y);
     const maxSample = Math.max(...sample.y);
-    return Math.max(maxBaseline, maxSample);
-  };
-
-  // Generate y-axis ticks: 0.2, 0.5, 1.0, 1.5, ..., max
-  const getYTicks = () => {
-    const yMax = getYMax();
-    const ticks = [0.2];
-    let current = 0.5;
-    while (current < yMax) {
-      ticks.push(current);
-      current += 0.5;
-    }
-    ticks.push(Math.round(yMax * 10) / 10); // Round max to 1 decimal
-    return ticks;
+    const actualMax = Math.max(maxBaseline, maxSample);
+    // Round up to nearest 0.5 (e.g., 5.3 -> 5.5, 5.7 -> 6.0)
+    return Math.ceil(actualMax * 2) / 2;
   };
 
   // Create chart data with proper x-y coordinate pairs
@@ -264,12 +253,8 @@ const GraphPreview: React.FC<Props> = ({
   return (
     <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
       <VStack align="start" spacing={4}>
-        <HStack justify="space-between" w="100%">
-          <Box>
-            <Text fontWeight="bold" fontSize="lg">Spectroscopy Analysis</Text>
-            <Text fontSize="xs" color="gray.600">Interactive graph with synchronized controls</Text>
-          </Box>
-          {hasData && (
+        {hasData && (
+          <HStack justify="flex-end" w="100%">
             <HStack spacing={2}>
               <Button size="sm" onClick={handleToggleGrid} variant="outline">
                 {showGrid ? 'Hide Grid' : 'Show Grid'}
@@ -278,16 +263,12 @@ const GraphPreview: React.FC<Props> = ({
                 Reset All Zoom
               </Button>
             </HStack>
-          )}
-        </HStack>
+          </HStack>
+        )}
 
         {/* Main Spectroscopy Graph */}
         {hasData ? (
-          <Box w="100%">
-            <Text fontWeight="semibold" fontSize="sm" mb={2} color="gray.700">
-              📈 Main Graph: Baseline vs Sample
-            </Text>
-            <Box w="100%" h="400px">
+          <Box w="100%" h="400px">
               <Line key={resetKey} ref={chartRef} data={data!} options={{
               responsive: true,
               maintainAspectRatio: false,
@@ -338,8 +319,8 @@ const GraphPreview: React.FC<Props> = ({
                     font: { size: 14, weight: 'bold' },
                     color: '#333'
                   },
-                  min: 0.2,
-                  max: getYMax(),
+                  min: 0,
+                  max: getYMax(), // Rounded to nearest 0.5 above actual max
                   grid: {
                     display: showGrid,  // Toggle grid lines
                     color: '#e0e0e0',
@@ -348,17 +329,35 @@ const GraphPreview: React.FC<Props> = ({
                   ticks: {
                     color: '#666',
                     font: { size: 12 },
+                    stepSize: 0.5, // Interval of 0.5
                     callback: function(value) {
                       return typeof value === 'number' ? value.toFixed(1) : value;
                     }
-                  },
-                  afterBuildTicks: (axis) => {
-                    // Set custom y-ticks
-                    axis.ticks = getYTicks().map(value => ({ value }));
                   }
                 }
               },
               plugins: {
+                tooltip: {
+                  callbacks: {
+                    title: function(tooltipItems) {
+                      // Show only the x-value in the title
+                      if (tooltipItems && tooltipItems[0] && tooltipItems[0].parsed && tooltipItems[0].parsed.x !== null) {
+                        return `Wavenumber: ${tooltipItems[0].parsed.x.toFixed(2)} cm⁻¹`;
+                      }
+                      return '';
+                    },
+                    label: function(context) {
+                      // Remove filename, show only "Baseline:" or "Sample:"
+                      const datasetLabel = context.dataset.label || '';
+                      const label = datasetLabel.split(':')[0]; // Get "Baseline" or "Sample"
+                      if (context.parsed && context.parsed.y !== null) {
+                        const value = context.parsed.y.toFixed(3);
+                        return `${label}: ${value}`;
+                      }
+                      return label;
+                    }
+                  }
+                },
                 legend: { 
                   position: 'top',
                   display: true,
@@ -434,12 +433,11 @@ const GraphPreview: React.FC<Props> = ({
                   },
                   limits: {
                     x: { min: 400, max: 4500 },
-                    y: { min: 0, max: 10 }
+                    y: { min: 0, max: 7.0 } // Max zoom out limit
                   }
                 }
               }
             }} />
-            </Box>
           </Box>
         ) : (
           <Text fontSize="sm" color="gray.500">Upload baseline and at least one sample to see preview.</Text>
