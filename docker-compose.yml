@@ -7,7 +7,7 @@ services:
       - "8080:8080"
     environment:
       - PYTHONUNBUFFERED=1
-      - GEMINI_API_KEY = AIzaSyDUDbmZ_rrfQddID8Evw0bktDtGDrrD4vo
+      - GEMINI_API_KEY=AIzaSyDUDbmZ_rrfQddID8Evw0bktDtGDrrD4vo
     volumes:
       - ./backend/static/generated_graphs:/app/backend/static/generated_graphs
   frontend:
