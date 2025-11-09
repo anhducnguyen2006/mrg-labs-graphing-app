@@ -43,9 +43,9 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
     initialWeights
 }) => {
     const [breakpoints, setBreakpoints] = useState<number[]>([2750, 2000, 1750, 550]);
-    const [weights, setWeights] = useState<number[]>([10, 10, 10, 70]);
+    const [weights, setWeights] = useState<number[]>([10, 20, 10, 60]);
     // Separate controlled string state so manual typing (including empty/partial) works smoothly
-    const [weightInputs, setWeightInputs] = useState<string[]>(["10", "10", "10", "70"]);
+    const [weightInputs, setWeightInputs] = useState<string[]>(["10", "20", "10", "60"]);
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const trackRef = useRef<HTMLDivElement>(null);
 
