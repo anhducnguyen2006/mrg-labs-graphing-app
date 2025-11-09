@@ -218,7 +218,7 @@ const GraphPreview: React.FC<Props> = ({
 
   // Update parent component with scores when they change
   React.useEffect(() => {
-    if (onScoreUpdate && Object.keys(sampleScores).length > 0) {
+    if (onScoreUpdate) {
       onScoreUpdate(sampleScores);
     }
   }, [sampleScores, onScoreUpdate]);

@@ -7,8 +7,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import SampleSearch from './pages/SampleSearch';
-import Alerts from './pages/Alerts';
 
 const App: React.FC = () => {
   return (
@@ -26,22 +24,6 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/sample-search"
-              element={
-                <ProtectedRoute>
-                  <SampleSearch />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/alerts"
-              element={
-                <ProtectedRoute>
-                  <Alerts />
                 </ProtectedRoute>
               }
             />

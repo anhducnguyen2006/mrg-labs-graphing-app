@@ -85,6 +85,11 @@ const Dashboard: React.FC = () => {
       setSelectedSample(updatedSamples.length > 0 ? updatedSamples[0].filename : undefined);
     }
 
+    // Clean up the score for the removed sample
+    const updatedScores = { ...sampleScores };
+    delete updatedScores[filename];
+    setSampleScores(updatedScores);
+
     // Update FileList for backend compatibility
     if (sampleFiles) {
       const dt = new DataTransfer();
@@ -136,6 +141,8 @@ const Dashboard: React.FC = () => {
               onFilesParsed={(files, raw) => {
                 setBaselineParsed(files[0]);
                 setBaselineFile(raw[0]);
+                // Clear scores when baseline changes - they will be recalculated
+                setSampleScores({});
               }}
             />
             <FileUploadBox
@@ -144,6 +151,8 @@ const Dashboard: React.FC = () => {
               onFilesParsed={(files: ParsedCSV[], raw: FileList) => {
                 setSampleParsed(files);
                 setSampleFiles(raw);
+                // Clear old scores - they will be recalculated by GraphPreview
+                setSampleScores({});
                 // Update selected sample: keep current if still exists, otherwise pick first available
                 if (files.length === 0) {
                   setSelectedSample(undefined);
