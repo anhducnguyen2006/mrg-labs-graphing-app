@@ -34,8 +34,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const isAuth = await authService.checkAuth();
             if (isAuth) {
-                // We don't have the username from checkAuth, but we know user is authenticated
-                setUser({ username: 'User' }); // Can be improved to fetch actual user data
+                // Try to get username from localStorage if available
+                const storedUsername = localStorage.getItem('username');
+                setUser({ username: storedUsername || 'User' });
             } else {
                 setUser(null);
             }
@@ -48,6 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (username: string, password: string) => {
         const response = await authService.login({ username, password });
+        // Store username in localStorage to persist across page reloads
+        localStorage.setItem('username', username);
         setUser({ username, id: response.user_id });
     };
 
@@ -59,6 +62,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         await authService.logout();
+        // Clear username from localStorage
+        localStorage.removeItem('username');
         setUser(null);
     };
 

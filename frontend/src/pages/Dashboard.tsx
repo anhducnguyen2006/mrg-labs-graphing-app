@@ -21,6 +21,7 @@ import ChangePasswordDialog from '../components/ChangePasswordDialog';
 import AbnormalityWeightDialog from '../components/AbnormalityWeightDialog';
 import type { RangeWeight } from '../components/AbnormalityWeightDialog';
 import { ParsedCSV, User } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
   const [baselineParsed, setBaselineParsed] = useState<ParsedCSV | undefined>();
@@ -34,14 +35,9 @@ const Dashboard: React.FC = () => {
   const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
   const { isOpen: isWeightOpen, onOpen: onWeightOpen, onClose: onWeightClose } = useDisclosure();
   const toast = useToast();
-
-  // Mock user data - replace with actual user data from authentication
-  const currentUser: User = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    avatarUrl: undefined, // Will use initials from name
-    backgroundUrl: undefined, // Optional: Add a custom background URL
-  };
+  
+  // Get actual user from AuthContext
+  const { user: authUser, logout } = useAuth();
 
   // User profile menu handlers
   const handleChangePasswordClick = () => {
@@ -50,10 +46,7 @@ const Dashboard: React.FC = () => {
 
   const handleLogoutClick = async () => {
     try {
-      await fetch('http://localhost:8080/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await logout();
 
       toast({
         title: 'Logged Out',
@@ -113,11 +106,20 @@ const Dashboard: React.FC = () => {
     <DashboardLayout
       navbarTitle="MRG Labs Graphing Dashboard"
       navbarRightContent={
-        <Button colorScheme="blue" onClick={onExportOpen}>
-          Export Graphs
+        <Button 
+          onClick={onExportOpen}
+          variant="outline"
+          size="sm"
+          colorScheme="gray"
+          borderColor="gray.300"
+          _hover={{ bg: 'gray.50', borderColor: 'gray.400' }}
+          _active={{ bg: 'gray.100' }}
+          fontWeight="normal"
+        >
+          Export
         </Button>
       }
-      user={currentUser}
+      user={authUser || undefined}
       onChangePasswordClick={handleChangePasswordClick}
       onLogoutClick={handleLogoutClick}
       sidebar={

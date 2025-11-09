@@ -11,7 +11,9 @@ import {
     VStack,
     useColorModeValue,
     IconButton,
+    Icon,
 } from '@chakra-ui/react';
+import { FaUserCircle } from 'react-icons/fa';
 import { User } from '../services/auth';
 import UserBackground from './UserBackground';
 
@@ -40,26 +42,18 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                         as={IconButton}
                         aria-label="User menu"
                         icon={
-                            <Box
-                                position="relative"
+                            <Icon
+                                as={FaUserCircle}
                                 w="32px"
                                 h="32px"
-                                borderRadius="full"
-                                overflow="hidden"
+                                color="gray.600"
                                 cursor="pointer"
                                 transition="all 0.2s"
                                 _hover={{
                                     transform: 'scale(1.05)',
-                                    boxShadow: 'lg',
+                                    color: 'gray.700',
                                 }}
-                            >
-                                <UserBackground
-                                    width="100%"
-                                    height="100%"
-                                    borderRadius="full"
-                                    defaultGradient="linear(to-r, blue.400, purple.500)"
-                                />
-                            </Box>
+                            />
                         }
                         variant="ghost"
                         _hover={{ bg: 'transparent' }}
@@ -102,14 +96,14 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                                     fontSize="sm"
                                     color={textColor}
                                 >
-                                    {user?.username || 'User'}
+                                    {user?.username || 'Guest User'}
                                 </Text>
                                 <Text
                                     fontSize="xs"
                                     color={subtleTextColor}
                                     noOfLines={1}
                                 >
-                                    {user?.id ? `ID: ${user.id}` : 'Welcome!'}
+                                    Welcome!
                                 </Text>
                             </VStack>
                         </Box>
