@@ -90,6 +90,15 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleToggleFavorite = (filename: string) => {
+    const updatedSamples = sampleParsed.map(sample =>
+      sample.filename === filename
+        ? { ...sample, isFavorite: !sample.isFavorite }
+        : sample
+    );
+    setSampleParsed(updatedSamples);
+  };
+
   return (
     <DashboardLayout
       navbarTitle="MRG Labs Graphing Dashboard"
@@ -107,6 +116,7 @@ const Dashboard: React.FC = () => {
           selectedSampleName={selectedSample}
           onSelectSample={setSelectedSample}
           onRemoveSample={handleRemoveSample}
+          onToggleFavorite={handleToggleFavorite}
         />
       }
     >

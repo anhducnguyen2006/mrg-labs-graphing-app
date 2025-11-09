@@ -70,6 +70,15 @@ const Alerts: React.FC = () => {
         }
     };
 
+    const handleToggleFavorite = (filename: string) => {
+        const updatedSamples = sampleParsed.map(sample =>
+            sample.filename === filename
+                ? { ...sample, isFavorite: !sample.isFavorite }
+                : sample
+        );
+        setSampleParsed(updatedSamples);
+    };
+
     return (
         <DashboardLayout
             navbarTitle="Alerts"
@@ -82,6 +91,7 @@ const Alerts: React.FC = () => {
                     selectedSampleName={selectedSample}
                     onSelectSample={setSelectedSample}
                     onRemoveSample={handleRemoveSample}
+                    onToggleFavorite={handleToggleFavorite}
                 />
             }
         >

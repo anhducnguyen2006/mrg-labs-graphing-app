@@ -3,6 +3,7 @@ export interface ParsedCSV {
   x: number[];
   y: number[];
   rawContent: string;
+  isFavorite?: boolean;
 }
 
 export interface SavedGraphResponse {
