@@ -21,9 +21,18 @@ import {
   Divider,
   useToast,
   Icon,
-  Tooltip
+  Tooltip,
+  Progress,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  IconButton,
+  Heading
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon, InfoIcon } from '@chakra-ui/icons';
+import { FiBarChart2 } from 'react-icons/fi';
 import { ParsedCSV } from '../types';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -33,14 +42,6 @@ interface GraphSummaryProps {
   selectedSample?: ParsedCSV;
   baselineFile?: File;
   selectedSampleFile?: File;
-}
-
-interface SimilarityMetrics {
-  sse: number | null;
-  frechet_distance: number | null;
-  normalized_sse: number | null;
-  rmse: number | null;
-  error?: string;
 }
 
 interface AnalysisData {
@@ -67,7 +68,7 @@ interface AnalysisData {
       std_diff: number;
       range_diff: number;
     };
-    similarity?: SimilarityMetrics;
+    similarity: SimilarityMetrics;
   };
   ai_insights: string;
   metadata: {
@@ -75,6 +76,17 @@ interface AnalysisData {
     sample_file: string;
     analysis_timestamp: string;
   };
+}
+
+interface SimilarityMetrics {
+  sse: number | null;
+  nsse: number | null;
+  nsse_similarity_level: number | null;
+  frechet_distance: number | null;
+  nfd: number | null;
+  nfd_similarity_level: number | null;
+  rmse: number | null;
+  error?: string;
 }
 
 // Configure marked options
@@ -126,7 +138,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
       formData.append('sample', selectedSampleFile);
       formData.append('sample_name', selectedSample.filename);
 
-      const response = await fetch('http://localhost:8080/analysis/generate_insights', {
+      const response = await fetch('/analysis/generate_insights', {
         method: 'POST',
         body: formData
       });
@@ -178,35 +190,22 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
     return 'red';
   };
 
-  const getSimilarityColor = (value: number | null, metricType: 'sse' | 'frechet'): string => {
-    if (value === null) return 'gray';
-    
-    // Lower values are better for both SSE and Fréchet
-    if (metricType === 'sse') {
-      if (value < 10) return 'green';
-      if (value < 50) return 'yellow';
-      return 'red';
-    } else { // frechet
-      if (value < 1) return 'green';
-      if (value < 5) return 'yellow';
-      return 'red';
-    }
+  const getSimilarityColor = (level: number | null): string => {
+    if (level === null) return 'gray';
+    if (level >= 90) return 'green';
+    if (level >= 75) return 'blue';
+    if (level >= 50) return 'yellow';
+    if (level >= 25) return 'orange';
+    return 'red';
   };
 
-  const getSimilarityLabel = (value: number | null, metricType: 'sse' | 'frechet'): string => {
-    if (value === null) return 'N/A';
-    
-    if (metricType === 'sse') {
-      if (value < 10) return 'Very Similar';
-      if (value < 50) return 'Moderately Similar';
-      if (value < 200) return 'Somewhat Different';
-      return 'Very Different';
-    } else { // frechet
-      if (value < 1) return 'Very Similar';
-      if (value < 5) return 'Moderately Similar';
-      if (value < 10) return 'Somewhat Different';
-      return 'Very Different';
-    }
+  const getSimilarityLabel = (level: number | null): string => {
+    if (level === null) return 'N/A';
+    if (level >= 90) return 'Excellent';
+    if (level >= 75) return 'Very Good';
+    if (level >= 50) return 'Good';
+    if (level >= 25) return 'Fair';
+    return 'Poor';
   };
 
   if (!canAnalyze) {
@@ -279,106 +278,6 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
       {/* Analysis Results */}
       {analysis && !isLoading && (
         <VStack spacing={0} align="stretch">
-          {/* Similarity Metrics Section */}
-          {analysis.statistics.similarity && (
-            <>
-              <Box p={4}>
-                <Button
-                  variant="ghost"
-                  rightIcon={isSimilarityOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                  onClick={toggleSimilarity}
-                  size="sm"
-                  fontWeight="bold"
-                  color="gray.700"
-                  mb={2}
-                >
-                  Similarity Analysis
-                </Button>
-                
-                <Collapse in={isSimilarityOpen} animateOpacity>
-                  <SimpleGrid columns={[1, 2, 4]} spacing={4} mt={2}>
-                    <Tooltip label="Sum of squared differences between curves. Lower is more similar.">
-                      <Stat>
-                        <StatLabel>Sum of Squared Errors</StatLabel>
-                        <StatNumber 
-                          fontSize="md"
-                          color={`${getSimilarityColor(analysis.statistics.similarity.sse, 'sse')}.500`}
-                        >
-                          {analysis.statistics.similarity.sse !== null 
-                            ? formatNumber(analysis.statistics.similarity.sse, 2)
-                            : 'N/A'}
-                        </StatNumber>
-                        <StatHelpText>
-                          {getSimilarityLabel(analysis.statistics.similarity.sse, 'sse')}
-                        </StatHelpText>
-                      </Stat>
-                    </Tooltip>
-
-                    <Tooltip label="Root mean square error - normalized measure of curve differences.">
-                      <Stat>
-                        <StatLabel>RMSE</StatLabel>
-                        <StatNumber fontSize="md">
-                          {analysis.statistics.similarity.rmse !== null 
-                            ? formatNumber(analysis.statistics.similarity.rmse, 4)
-                            : 'N/A'}
-                        </StatNumber>
-                        <StatHelpText>
-                          Root Mean Square Error
-                        </StatHelpText>
-                      </Stat>
-                    </Tooltip>
-
-                    <Tooltip label="Fréchet distance measures geometric similarity between curves. Lower is more similar.">
-                      <Stat>
-                        <StatLabel>Fréchet Distance</StatLabel>
-                        <StatNumber 
-                          fontSize="md"
-                          color={`${getSimilarityColor(analysis.statistics.similarity.frechet_distance, 'frechet')}.500`}
-                        >
-                          {analysis.statistics.similarity.frechet_distance !== null 
-                            ? formatNumber(analysis.statistics.similarity.frechet_distance, 4)
-                            : 'N/A'}
-                        </StatNumber>
-                        <StatHelpText>
-                          {getSimilarityLabel(analysis.statistics.similarity.frechet_distance, 'frechet')}
-                        </StatHelpText>
-                      </Stat>
-                    </Tooltip>
-
-                    <Tooltip label="SSE normalized by number of data points.">
-                      <Stat>
-                        <StatLabel>Normalized SSE</StatLabel>
-                        <StatNumber fontSize="md">
-                          {analysis.statistics.similarity.normalized_sse !== null 
-                            ? formatNumber(analysis.statistics.similarity.normalized_sse, 4)
-                            : 'N/A'}
-                        </StatNumber>
-                        <StatHelpText>
-                          Per data point
-                        </StatHelpText>
-                      </Stat>
-                    </Tooltip>
-                  </SimpleGrid>
-
-                  {/* Similarity interpretation */}
-                  <Box mt={4} p={3} bg="blue.50" borderRadius="md">
-                    <Text fontSize="xs" color="blue.700" fontWeight="medium">
-                      📊 Similarity Interpretation:
-                    </Text>
-                    <Text fontSize="xs" color="blue.600" mt={1}>
-                      • <strong>SSE & RMSE:</strong> Measure point-by-point differences. Lower values indicate curves are closer together.
-                    </Text>
-                    <Text fontSize="xs" color="blue.600">
-                      • <strong>Fréchet Distance:</strong> Considers curve shape and trajectory. Useful for identifying pattern similarities even with shifts.
-                    </Text>
-                  </Box>
-                </Collapse>
-              </Box>
-
-              <Divider />
-            </>
-          )}
-
           {/* Statistical Summary */}
           <Box p={4}>
             <Button
@@ -428,6 +327,148 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
                   </StatHelpText>
                 </Stat>
               </SimpleGrid>
+            </Collapse>
+          </Box>
+
+          <Divider />
+
+          {/* Similarity Metrics Section */}
+          <Box p={4}>
+            <HStack justify="space-between" mb={2}>
+              <HStack>
+                <Icon as={FiBarChart2} color="purple.500" />
+                <Heading size="sm">Similarity Metrics</Heading>
+              </HStack>
+              <IconButton
+                aria-label="Toggle similarity metrics"
+                icon={isSimilarityOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                size="sm"
+                variant="ghost"
+                onClick={() => toggleSimilarity()}
+              />
+            </HStack>
+            
+            <Collapse in={isSimilarityOpen} animateOpacity>
+              <VStack spacing={4} mt={2} align="stretch">
+                {/* NSSE Similarity */}
+                <Box p={4} bg="purple.50" borderRadius="md" borderWidth="1px" borderColor="purple.200">
+                  <HStack justify="space-between" mb={2}>
+                    <Text fontWeight="bold" fontSize="sm" color="purple.700">
+                      NSSE Similarity Level
+                    </Text>
+                    <Badge colorScheme={getSimilarityColor(analysis.statistics.similarity.nsse_similarity_level)}>
+                      {getSimilarityLabel(analysis.statistics.similarity.nsse_similarity_level)}
+                    </Badge>
+                  </HStack>
+                  <Progress 
+                    value={analysis.statistics.similarity.nsse_similarity_level || 0} 
+                    colorScheme={getSimilarityColor(analysis.statistics.similarity.nsse_similarity_level)}
+                    size="lg"
+                    borderRadius="md"
+                    mb={2}
+                  />
+                  <HStack justify="space-between">
+                    <Text fontSize="xs" color="gray.600">
+                      Based on Normalized Sum of Squared Errors
+                    </Text>
+                    <Text fontSize="md" fontWeight="bold" color="purple.600">
+                      {analysis.statistics.similarity.nsse_similarity_level !== null 
+                        ? `${analysis.statistics.similarity.nsse_similarity_level.toFixed(1)}%`
+                        : 'N/A'}
+                    </Text>
+                  </HStack>
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    NSSE: {analysis.statistics.similarity.nsse !== null 
+                      ? analysis.statistics.similarity.nsse.toFixed(4)
+                      : 'N/A'}
+                  </Text>
+                </Box>
+
+                {/* NFD Similarity */}
+                <Box p={4} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+                  <HStack justify="space-between" mb={2}>
+                    <Text fontWeight="bold" fontSize="sm" color="blue.700">
+                      NFD Similarity Level
+                    </Text>
+                    <Badge colorScheme={getSimilarityColor(analysis.statistics.similarity.nfd_similarity_level)}>
+                      {getSimilarityLabel(analysis.statistics.similarity.nfd_similarity_level)}
+                    </Badge>
+                  </HStack>
+                  <Progress 
+                    value={analysis.statistics.similarity.nfd_similarity_level || 0} 
+                    colorScheme={getSimilarityColor(analysis.statistics.similarity.nfd_similarity_level)}
+                    size="lg"
+                    borderRadius="md"
+                    mb={2}
+                  />
+                  <HStack justify="space-between">
+                    <Text fontSize="xs" color="gray.600">
+                      Based on Normalized Fréchet Distance
+                    </Text>
+                    <Text fontSize="md" fontWeight="bold" color="blue.600">
+                      {analysis.statistics.similarity.nfd_similarity_level !== null 
+                        ? `${analysis.statistics.similarity.nfd_similarity_level.toFixed(1)}%`
+                        : 'N/A'}
+                    </Text>
+                  </HStack>
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    NFD: {analysis.statistics.similarity.nfd !== null 
+                      ? analysis.statistics.similarity.nfd.toFixed(4)
+                      : 'N/A'}
+                  </Text>
+                </Box>
+
+                {/* Technical Details */}
+                <Accordion allowToggle>
+                  <AccordionItem border="none">
+                    <AccordionButton bg="gray.50" borderRadius="md" _hover={{ bg: 'gray.100' }}>
+                      <Box flex="1" textAlign="left">
+                        <Text fontSize="xs" fontWeight="medium">Technical Details</Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                    <AccordionPanel pb={4}>
+                      <SimpleGrid columns={[1, 2]} spacing={3}>
+                        <Stat size="sm">
+                          <StatLabel fontSize="xs">SSE</StatLabel>
+                          <StatNumber fontSize="sm">
+                            {analysis.statistics.similarity.sse !== null 
+                              ? formatNumber(analysis.statistics.similarity.sse, 2)
+                              : 'N/A'}
+                          </StatNumber>
+                        </Stat>
+                        <Stat size="sm">
+                          <StatLabel fontSize="xs">RMSE</StatLabel>
+                          <StatNumber fontSize="sm">
+                            {analysis.statistics.similarity.rmse !== null 
+                              ? formatNumber(analysis.statistics.similarity.rmse, 4)
+                              : 'N/A'}
+                          </StatNumber>
+                        </Stat>
+                        <Stat size="sm">
+                          <StatLabel fontSize="xs">Fréchet Distance</StatLabel>
+                          <StatNumber fontSize="sm">
+                            {analysis.statistics.similarity.frechet_distance !== null 
+                              ? formatNumber(analysis.statistics.similarity.frechet_distance, 4)
+                              : 'N/A'}
+                          </StatNumber>
+                        </Stat>
+                      </SimpleGrid>
+                    </AccordionPanel>
+                  </AccordionItem>
+                </Accordion>
+
+                <Box mt={2} p={3} bg="gray.50" borderRadius="md">
+                  <Text fontSize="xs" color="gray.700" fontWeight="medium" mb={1}>
+                    📊 Understanding Similarity Levels:
+                  </Text>
+                  <Text fontSize="xs" color="gray.600">
+                    • <strong>NSSE:</strong> Measures point-by-point differences normalized by baseline variance<br/>
+                    • <strong>NFD:</strong> Captures overall curve shape similarity normalized by data range<br/>
+                    • <strong>100%:</strong> Identical graphs | <strong>0%:</strong> Completely different
+                  </Text>
+                </Box>
+              </VStack>
             </Collapse>
           </Box>
 
