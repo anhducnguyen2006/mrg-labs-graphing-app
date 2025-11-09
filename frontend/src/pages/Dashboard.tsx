@@ -13,6 +13,7 @@ import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
 import DashboardLayout from '../components/DashboardLayout';
 import Chatbox from '../components/Chatbox';
+import ChangePasswordDialog from '../components/ChangePasswordDialog';
 import { ParsedCSV, User } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -21,7 +22,8 @@ const Dashboard: React.FC = () => {
   const [sampleParsed, setSampleParsed] = useState<ParsedCSV[]>([]);
   const [sampleFiles, setSampleFiles] = useState<FileList | undefined>();
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
+  const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
   const toast = useToast();
 
   // Mock user data - replace with actual user data from authentication
@@ -29,28 +31,40 @@ const Dashboard: React.FC = () => {
     name: 'John Doe',
     email: 'john@example.com',
     avatarUrl: undefined, // Will use initials from name
+    backgroundUrl: undefined, // Optional: Add a custom background URL
   };
 
   // User profile menu handlers
   const handleChangePasswordClick = () => {
-    toast({
-      title: 'Change Password',
-      description: 'Change password functionality coming soon!',
-      status: 'info',
-      duration: 3000,
-      isClosable: true,
-    });
+    onChangePasswordOpen();
   };
 
-  const handleLogoutClick = () => {
-    toast({
-      title: 'Logout',
-      description: 'Logging out...',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
-    // Add actual logout logic here
+  const handleLogoutClick = async () => {
+    try {
+      await fetch('http://localhost:8080/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      toast({
+        title: 'Logout Failed',
+        description: 'An error occurred during logout.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   const handleRemoveSample = (filename: string) => {
@@ -76,7 +90,7 @@ const Dashboard: React.FC = () => {
     <DashboardLayout
       navbarTitle="MRG Labs Graphing Dashboard"
       navbarRightContent={
-        <Button colorScheme="blue" onClick={onOpen}>
+        <Button colorScheme="blue" onClick={onExportOpen}>
           Export Graphs
         </Button>
       }
@@ -133,10 +147,16 @@ const Dashboard: React.FC = () => {
 
       {/* Export Dialog */}
       <ExportDialog
-        isOpen={isOpen}
-        onClose={onClose}
+        isOpen={isExportOpen}
+        onClose={onExportClose}
         baseline={baselineParsed}
         samples={sampleParsed}
+      />
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        isOpen={isChangePasswordOpen}
+        onClose={onChangePasswordClose}
       />
 
       {/* AI Chatbox */}
