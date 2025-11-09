@@ -121,7 +121,7 @@ This data appears to be spectroscopy or similar scientific measurement data base
     setIsLoading(true);
 
     try {
-      const response = await fetch('/chat/send_message', {
+      const response = await fetch('http://localhost:8080/chat/send_message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
