@@ -23,6 +23,8 @@ import {
   Icon
 } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon, InfoIcon } from '@chakra-ui/icons';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ParsedCSV } from '../types';
 
 interface GraphSummaryProps {
@@ -294,14 +296,48 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
                 borderColor="gray.200"
                 mt={2}
               >
-                <Text
+                <Box
                   fontSize="sm"
                   color="gray.700"
-                  whiteSpace="pre-wrap"
                   lineHeight="1.6"
+                  sx={{
+                    '& h1, & h2, & h3, & h4, & h5, & h6': {
+                      fontWeight: 'bold',
+                      mb: 2,
+                      color: 'gray.800'
+                    },
+                    '& h3': {
+                      fontSize: 'md',
+                      color: 'blue.700'
+                    },
+                    '& p': {
+                      mb: 3
+                    },
+                    '& ul, & ol': {
+                      pl: 4,
+                      mb: 3
+                    },
+                    '& li': {
+                      mb: 1
+                    },
+                    '& strong': {
+                      fontWeight: 'bold',
+                      color: 'gray.800'
+                    },
+                    '& code': {
+                      bg: 'gray.100',
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 'sm',
+                      fontSize: 'xs',
+                      fontFamily: 'mono'
+                    }
+                  }}
                 >
-                  {analysis.ai_insights}
-                </Text>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {analysis.ai_insights}
+                  </ReactMarkdown>
+                </Box>
                 
                 <Box mt={4} pt={3} borderTop="1px solid" borderColor="gray.300">
                   <HStack justify="space-between" fontSize="xs" color="gray.500">

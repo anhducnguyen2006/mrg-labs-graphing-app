@@ -89,13 +89,11 @@ const Chatbox: React.FC<ChatboxProps> = ({ graphContext, graphData }) => {
     return `Current Graph Analysis Context:
 
 BASELINE DATA: "${baselineStats.name}"
-- Data Points: ${baselineStats.dataPoints}
 - X Range: [${baselineStats.xRange[0].toFixed(1)}, ${baselineStats.xRange[1].toFixed(1)}]
 - Y Range: [${baselineStats.yRange[0].toFixed(3)}, ${baselineStats.yRange[1].toFixed(3)}]
 - Y Mean: ${baselineStats.yMean.toFixed(3)}
 
 SAMPLE DATA: "${sampleStats.name}" (currently selected)
-- Data Points: ${sampleStats.dataPoints}
 - X Range: [${sampleStats.xRange[0].toFixed(1)}, ${sampleStats.xRange[1].toFixed(1)}]
 - Y Range: [${sampleStats.yRange[0].toFixed(3)}, ${sampleStats.yRange[1].toFixed(3)}]
 - Y Mean: ${sampleStats.yMean.toFixed(3)}
@@ -350,10 +348,10 @@ This data appears to be spectroscopy or similar scientific measurement data base
                   {graphData && graphData.baseline && graphData.selectedSample ? (
                     <VStack spacing={1} align="stretch">
                       <Text fontSize="xs" color="blue.700">
-                        <strong>Baseline:</strong> {graphData.baseline.filename} ({graphData.baseline.x.length} points)
+                        <strong>Baseline:</strong> {graphData.baseline.filename}
                       </Text>
                       <Text fontSize="xs" color="blue.700">
-                        <strong>Sample:</strong> {graphData.selectedSample.filename} ({graphData.selectedSample.x.length} points)
+                        <strong>Sample:</strong> {graphData.selectedSample.filename}
                       </Text>
                       <Text fontSize="xs" color="blue.600">
                         💡 I can analyze patterns, compare values, and answer questions about this data

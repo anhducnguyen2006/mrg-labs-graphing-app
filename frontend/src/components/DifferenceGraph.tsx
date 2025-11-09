@@ -222,7 +222,7 @@ const DifferenceGraph = React.forwardRef<any, Props>(({
           <Box w="100%" p={2} bg="red.50" rounded="md" borderWidth="1px" borderColor="red.200">
             <Text fontSize="xs" color="red.800">
               📊 <strong>Interpretation:</strong> Higher values indicate greater deviation from average behavior. 
-              Values near zero mean the sample is typical. Spikes indicate unusual differences at specific wavelengths.
+              Values near zero mean the sample is typical. Spikes indicate unusual differences at specific wavenumber.
             </Text>
           </Box>
         )}

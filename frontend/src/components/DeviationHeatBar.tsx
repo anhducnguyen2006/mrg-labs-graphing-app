@@ -88,7 +88,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
           width={`${segmentWidth}%`}
           height="100%"
           backgroundColor={color}
-          title={`Wavelength: ${Math.round(x[i])} cm⁻¹, Deviation: ${deviation[i].toFixed(4)}`}
+          title={`Wavenumber: ${Math.round(x[i])} cm⁻¹, Deviation: ${deviation[i].toFixed(4)}`}
           cursor="pointer"
           transition="all 0.2s"
           _hover={{
@@ -247,7 +247,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                 {createWavelengthMarkers()}
               </Box>
               <Text fontSize="xs" color="gray.600" textAlign="center" mt={1}>
-                Wavelength (cm⁻¹)
+                Wavenumber (cm⁻¹)
               </Text>
             </Box>
 
@@ -352,7 +352,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
               {abnormalityWeights && abnormalityWeights.length > 0 && 
                 " Colored background regions show applied weight ranges - higher weights amplify deviations in those spectral areas."
               }
-              Hover over the heat bar to see specific wavelength and deviation values.
+              Hover over the heat bar to see specific wavenumber and deviation values.
             </Text>
           </Box>
         )}

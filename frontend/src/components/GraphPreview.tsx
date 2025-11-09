@@ -367,7 +367,7 @@ const GraphPreview: React.FC<Props> = ({
                 {showGrid ? 'Hide Grid' : 'Show Grid'}
               </Button>
               <Button size="sm" onClick={handleResetZoom} variant="outline">
-                Reset All Zoom
+                Reset View
               </Button>
             </HStack>
           )}
@@ -377,7 +377,7 @@ const GraphPreview: React.FC<Props> = ({
         {hasData ? (
           <Box w="100%">
             <Text fontWeight="semibold" fontSize="sm" mb={2} color="gray.700">
-              📈 Main Graph: Baseline vs Sample
+              Main Graph: Baseline vs Sample
             </Text>
             <Box w="100%" h="400px">
               <Line key={resetKey} ref={chartRef} data={data!} options={{
