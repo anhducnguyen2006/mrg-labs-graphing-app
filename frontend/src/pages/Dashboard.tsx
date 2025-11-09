@@ -5,7 +5,11 @@ import {
   Box,
   Button,
   useDisclosure,
-  useToast
+  useToast,
+  HStack,
+  Text,
+  Badge,
+  Flex
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/FileUploadBox';
 import GraphPreview from '../components/GraphPreview';
@@ -150,7 +154,33 @@ const Dashboard: React.FC = () => {
             />
           </SimpleGrid>
 
-          <Box display="flex" justifyContent="flex-start">
+          {/* Selected Sample Info and Configure Button */}
+          <Flex justify="space-between" align="center" w="100%">
+            <HStack>
+              {selectedSample && sampleScores[selectedSample] !== undefined && (
+                <>
+                  <Text fontSize="md" fontWeight="medium" color="gray.700">
+                    Selected Sample:
+                  </Text>
+                  <Text fontSize="md" fontWeight="bold" color="blue.700" maxW="300px" noOfLines={1}>
+                    {selectedSample?.replace('.csv', '') || ''}
+                  </Text>
+                  <Badge
+                    colorScheme={
+                      sampleScores[selectedSample] >= 90 ? 'green' : 
+                      sampleScores[selectedSample] >= 70 ? 'yellow' : 'red'
+                    }
+                    size="md"
+                    fontSize="sm"
+                    fontWeight="bold"
+                    px={3}
+                    py={1}
+                  >
+                    Score: {Math.round(sampleScores[selectedSample])}
+                  </Badge>
+                </>
+              )}
+            </HStack>
             <Button
               colorScheme="purple"
               variant="outline"
@@ -159,7 +189,7 @@ const Dashboard: React.FC = () => {
             >
               Configure Abnormality Weights
             </Button>
-          </Box>
+          </Flex>
 
           <GraphPreview
             baseline={baselineParsed}
