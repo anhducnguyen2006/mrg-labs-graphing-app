@@ -204,38 +204,79 @@ def change_password(payload: ChangePasswordPayload, user_id: int = Depends(get_c
         if conn:
             conn.close()
 
+# @app.post("/generate_graphs")
+# async def generate_graphs(
+#     baseline: UploadFile = File(...),
+#     samples: List[UploadFile] = File(...),
+#     save_dir: str | None = Form(None),
+#     format: str = Form("png"),
+#     user_id: int = Depends(get_current_user_id)
+# ):
+#     try:
+#         # Generate the graphs and get their file paths
+#         saved_paths = generate_and_save(baseline, samples, save_subdir=save_dir, format=format)
+#         # Persist graph metadata for each generated file
+#         try:
+#             conn = get_db_connection()
+#             cur = conn.cursor()
+#             for rel_path, sample in zip(saved_paths, samples):
+#                 # baseline.filename, sample.filename, generated_path
+#                 cur.execute(
+#                     "INSERT INTO graphs (user_id, baseline_filename, sample_filename, generated_path) VALUES (%s, %s, %s, %s)",
+#                     (int(user_id), getattr(baseline, 'filename', None), getattr(sample, 'filename', None), rel_path)
+#                 )
+#             conn.commit()
+#         except Exception as e:
+#             # don't block the response if DB logging fails; include a warning in the response
+#             # (could be improved to log)
+#             print('Failed to insert graph record:', e)
+#         finally:
+#             try:
+#                 if conn:
+#                     conn.close()
+#             except Exception:
+#                 pass
+        
+#         # Create a temporary zip file
+#         with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_zip:
+#             with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+#                 for relative_path in saved_paths:
+#                     # Convert relative path to absolute path
+#                     if relative_path.startswith('/static/generated_graphs/'):
+#                         file_path = os.path.join(SAVE_DIR, relative_path.replace('/static/generated_graphs/', ''))
+#                     else:
+#                         file_path = os.path.join(SAVE_DIR, os.path.basename(relative_path))
+                    
+#                     if os.path.exists(file_path):
+#                         # Add file to zip with just the filename (no directories)
+#                         zip_file.write(file_path, os.path.basename(file_path))
+            
+#             # Return the zip file as a download
+#             def cleanup_file():
+#                 try:
+#                     os.unlink(temp_zip.name)
+#                 except:
+#                     pass
+            
+#             return FileResponse(
+#                 path=temp_zip.name,
+#                 filename=f"exported_graphs.zip",
+#                 media_type='application/zip',
+#                 background=cleanup_file
+#             )
+#     except Exception as e:
+#         return JSONResponse(status_code=400, content={"error": str(e)})
+
 @app.post("/generate_graphs")
 async def generate_graphs(
     baseline: UploadFile = File(...),
     samples: List[UploadFile] = File(...),
     save_dir: str | None = Form(None),
-    format: str = Form("png"),
-    user_id: int = Depends(get_current_user_id)
+    format: str = Form("png")
 ):
     try:
         # Generate the graphs and get their file paths
         saved_paths = generate_and_save(baseline, samples, save_subdir=save_dir, format=format)
-        # Persist graph metadata for each generated file
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            for rel_path, sample in zip(saved_paths, samples):
-                # baseline.filename, sample.filename, generated_path
-                cur.execute(
-                    "INSERT INTO graphs (user_id, baseline_filename, sample_filename, generated_path) VALUES (%s, %s, %s, %s)",
-                    (int(user_id), getattr(baseline, 'filename', None), getattr(sample, 'filename', None), rel_path)
-                )
-            conn.commit()
-        except Exception as e:
-            # don't block the response if DB logging fails; include a warning in the response
-            # (could be improved to log)
-            print('Failed to insert graph record:', e)
-        finally:
-            try:
-                if conn:
-                    conn.close()
-            except Exception:
-                pass
         
         # Create a temporary zip file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_zip:
@@ -266,8 +307,6 @@ async def generate_graphs(
             )
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
-
-
 @app.get('/api/v1/files')
 def list_user_files(user_id: int = Depends(get_current_user_id)):
     conn = None
