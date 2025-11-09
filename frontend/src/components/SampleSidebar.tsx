@@ -61,15 +61,15 @@ const SampleSidebar: React.FC<Props> = ({
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 95) return 'green';  // STRICT: Only excellent samples get green (95+ vs 90+)
-    if (score >= 85) return 'yellow'; // STRICT: Warning threshold raised (85+ vs 70+)
-    return 'red';                     // STRICT: Critical threshold now <85 vs <70
+    if (score >= 90) return 'green';
+    if (score >= 70) return 'yellow';
+    return 'red';
   };
 
   const getScoreCategory = (score: number): FilterOption => {
-    if (score >= 95) return 'green';  // STRICT: Only excellent samples get green (95+ vs 90+)
-    if (score >= 85) return 'yellow'; // STRICT: Warning threshold raised (85+ vs 70+)
-    return 'red';                     // STRICT: Critical threshold now <85 vs <70
+    if (score >= 90) return 'green';
+    if (score >= 70) return 'yellow';
+    return 'red';
   };
 
   const getSortIcon = (sortOption: SortOption) => {
@@ -214,7 +214,7 @@ const SampleSidebar: React.FC<Props> = ({
                   flex={1}
                   fontSize="xs"
                 >
-                  Good ({samples.filter(s => sampleScores[s.filename] >= 95).length})
+                  Good ({samples.filter(s => sampleScores[s.filename] >= 90).length})
                 </Button>
                 <Button
                   size="xs"
@@ -227,7 +227,7 @@ const SampleSidebar: React.FC<Props> = ({
                 >
                   Warning ({samples.filter(s => {
                     const score = sampleScores[s.filename];
-                    return score >= 85 && score < 95;
+                    return score >= 70 && score < 90;
                   }).length})
                 </Button>
                 <Button
@@ -239,7 +239,7 @@ const SampleSidebar: React.FC<Props> = ({
                   flex={1}
                   fontSize="xs"
                 >
-                  Critical ({samples.filter(s => sampleScores[s.filename] < 85).length})
+                  Critical ({samples.filter(s => sampleScores[s.filename] < 70).length})
                 </Button>
               </HStack>
             </Box>

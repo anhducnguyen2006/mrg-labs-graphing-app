@@ -130,11 +130,11 @@ const GraphPreview: React.FC<Props> = ({
     }
 
     // Calculate deviation from average for selected sample
-    // deviation[i] = individual_diff[i] - avg_diff[i]
-    // (Weight multiplication can be added later if needed)
-    const selectedSampleDiff = sampleDifferences.find(
-      d => samples.find(s => s.filename === selectedSampleName)
-    ) || sampleDifferences[0];
+    // Find the index of the selected sample
+    const selectedSampleIndex = selectedSampleName 
+      ? samples.findIndex(s => s.filename === selectedSampleName)
+      : 0;
+    const selectedSampleDiff = sampleDifferences[selectedSampleIndex >= 0 ? selectedSampleIndex : 0];
 
     const deviation: number[] = [];
 
@@ -206,9 +206,9 @@ const GraphPreview: React.FC<Props> = ({
       const avgWeightedDeviation = totalPoints > 0 ? totalWeightedDeviation / totalPoints : 0;
 
       // Convert to score (0-100, where lower deviation = higher score)
-      // STRICT SCORING: Much more sensitive to deviations for grease oxidation analysis
-      const normalizedDeviation = Math.min(avgWeightedDeviation / 0.02, 5); // Much stricter normalization (0.02 vs 0.1, cap at 5x vs 10x)
-      const score = Math.max(0, Math.min(100, 100 * Math.exp(-normalizedDeviation * 1.5))); // Steeper decay (1.5 vs 0.5)
+      // Use exponential decay to make scoring more sensitive to high deviations
+      const normalizedDeviation = Math.min(avgWeightedDeviation / 0.1, 10); // Cap at 10x normal
+      const score = Math.max(0, Math.min(100, 100 * Math.exp(-normalizedDeviation * 0.5)));
 
       scores[sample.filename] = Math.round(score);
     });
