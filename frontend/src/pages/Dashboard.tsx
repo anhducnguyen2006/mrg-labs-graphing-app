@@ -14,6 +14,8 @@ import ExportDialog from '../components/ExportDialog';
 import DashboardLayout from '../components/DashboardLayout';
 import Chatbox from '../components/Chatbox';
 import ChangePasswordDialog from '../components/ChangePasswordDialog';
+import AbnormalityWeightDialog from '../components/AbnormalityWeightDialog';
+import type { RangeWeight } from '../components/AbnormalityWeightDialog';
 import { ParsedCSV, User } from '../types';
 
 const Dashboard: React.FC = () => {
@@ -22,8 +24,10 @@ const Dashboard: React.FC = () => {
   const [sampleParsed, setSampleParsed] = useState<ParsedCSV[]>([]);
   const [sampleFiles, setSampleFiles] = useState<FileList | undefined>();
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
+  const [abnormalityWeights, setAbnormalityWeights] = useState<RangeWeight[]>([]);
   const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
   const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
+  const { isOpen: isWeightOpen, onOpen: onWeightOpen, onClose: onWeightClose } = useDisclosure();
   const toast = useToast();
 
   // Mock user data - replace with actual user data from authentication
@@ -134,6 +138,17 @@ const Dashboard: React.FC = () => {
             />
           </SimpleGrid>
 
+          <Box display="flex" justifyContent="flex-start">
+            <Button
+              colorScheme="purple"
+              variant="outline"
+              size="md"
+              onClick={onWeightOpen}
+            >
+              Configure Abnormality Weights
+            </Button>
+          </Box>
+
           <GraphPreview
             baseline={baselineParsed}
             samples={sampleParsed}
@@ -157,6 +172,24 @@ const Dashboard: React.FC = () => {
       <ChangePasswordDialog
         isOpen={isChangePasswordOpen}
         onClose={onChangePasswordClose}
+      />
+
+      {/* Abnormality Weight Configuration Dialog */}
+      <AbnormalityWeightDialog
+        isOpen={isWeightOpen}
+        onClose={onWeightClose}
+        onSave={(weights) => {
+          setAbnormalityWeights(weights);
+          localStorage.setItem('abnormalityWeights', JSON.stringify(weights));
+          toast({
+            title: 'Weights Saved',
+            description: 'Abnormality calculation weights have been configured',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+        }}
+        initialWeights={abnormalityWeights}
       />
 
       {/* AI Chatbox */}
