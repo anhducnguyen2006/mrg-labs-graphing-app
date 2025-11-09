@@ -25,6 +25,7 @@ const Dashboard: React.FC = () => {
   const [sampleFiles, setSampleFiles] = useState<FileList | undefined>();
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
   const [abnormalityWeights, setAbnormalityWeights] = useState<RangeWeight[]>([]);
+  const [sampleScores, setSampleScores] = useState<{ [filename: string]: number }>({});
   const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
   const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
   const { isOpen: isWeightOpen, onOpen: onWeightOpen, onClose: onWeightClose } = useDisclosure();
@@ -117,6 +118,7 @@ const Dashboard: React.FC = () => {
           onSelectSample={setSelectedSample}
           onRemoveSample={handleRemoveSample}
           onToggleFavorite={handleToggleFavorite}
+          sampleScores={sampleScores}
         />
       }
     >
@@ -167,6 +169,7 @@ const Dashboard: React.FC = () => {
             baselineFile={baselineFile}
             sampleFiles={sampleFiles}
             abnormalityWeights={abnormalityWeights}
+            onScoreUpdate={setSampleScores}
           />
         </VStack>
       </Box>

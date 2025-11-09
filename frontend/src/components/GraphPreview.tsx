@@ -44,6 +44,7 @@ interface Props {
   baselineFile?: File;
   sampleFiles?: FileList;
   abnormalityWeights?: RangeWeight[];
+  onScoreUpdate?: (scores: { [filename: string]: number }) => void;
 }
 
 const GraphPreview: React.FC<Props> = ({ 
@@ -53,7 +54,8 @@ const GraphPreview: React.FC<Props> = ({
   onSelectSample, 
   baselineFile, 
   sampleFiles,
-  abnormalityWeights = []
+  abnormalityWeights = [],
+  onScoreUpdate
 }) => {
   const chartRef = useRef<any>(null);
   const differenceChartRef = useRef<any>(null);
@@ -67,6 +69,20 @@ const GraphPreview: React.FC<Props> = ({
   const [differenceResetKey, setDifferenceResetKey] = React.useState(0);
   // Track grid visibility (synchronized across both graphs)
   const [showGrid, setShowGrid] = React.useState(true);
+
+  // Function to get weight for a given wavelength
+  const getWeightForWavelength = (wavelength: number): number => {
+    if (!abnormalityWeights || abnormalityWeights.length === 0) {
+      return 1.0; // Default weight when no weights are configured
+    }
+
+    for (const range of abnormalityWeights) {
+      if (wavelength >= range.min && wavelength <= range.max) {
+        return range.weight / 100; // Convert percentage to decimal
+      }
+    }
+    return 1.0; // Default weight if wavelength doesn't fall in any range
+  };
 
   // Step 2: Calculate differences and average across all samples
   const differenceData = useMemo(() => {
@@ -120,20 +136,6 @@ const GraphPreview: React.FC<Props> = ({
       d => samples.find(s => s.filename === selectedSampleName)
     ) || sampleDifferences[0];
 
-    // Function to get weight for a given wavelength
-    const getWeightForWavelength = (wavelength: number): number => {
-      if (!abnormalityWeights || abnormalityWeights.length === 0) {
-        return 1.0; // Default weight when no weights are configured
-      }
-
-      for (const range of abnormalityWeights) {
-        if (wavelength >= range.min && wavelength <= range.max) {
-          return range.weight / 100; // Convert percentage to decimal
-        }
-      }
-      return 1.0; // Default weight if wavelength doesn't fall in any range
-    };
-
     const deviation: number[] = [];
 
     for (let i = 0; i < x.length; i++) {
@@ -160,7 +162,67 @@ const GraphPreview: React.FC<Props> = ({
       deviation,
       allSampleDifferences: sampleDifferences
     };
-  }, [baseline, samples, selectedSampleName]);
+  }, [baseline, samples, selectedSampleName, abnormalityWeights]);
+
+  // Calculate anomaly scores for all samples (0-100, higher is better)
+  const sampleScores = useMemo(() => {
+    if (!baseline || samples.length === 0 || !differenceData) return {};
+
+    const scores: { [filename: string]: number } = {};
+
+    // Convert baseline to Series format
+    const baselineSeries: Series = {
+      name: baseline.filename,
+      points: baseline.x.map((x, i) => ({ x, y: baseline.y[i] }))
+    };
+
+    // Calculate score for each sample
+    samples.forEach(sample => {
+      const sampleSeries: Series = {
+        name: sample.filename,
+        points: sample.x.map((x, i) => ({ x, y: sample.y[i] }))
+      };
+
+      const sampleDiff = diff(baselineSeries, sampleSeries);
+      const { x: diffX, delta } = sampleDiff;
+
+      // Calculate weighted deviations for scoring
+      let totalWeightedDeviation = 0;
+      let totalPoints = 0;
+
+      for (let i = 0; i < diffX.length; i++) {
+        const wavelength = diffX[i];
+        const deviation = Math.abs(delta[i]);
+        
+        // Apply weight for this wavelength
+        const weight = getWeightForWavelength(wavelength);
+        const weightedDeviation = deviation * weight;
+        
+        totalWeightedDeviation += weightedDeviation;
+        totalPoints++;
+      }
+
+      // Calculate average weighted deviation
+      const avgWeightedDeviation = totalPoints > 0 ? totalWeightedDeviation / totalPoints : 0;
+
+      // Convert to score (0-100, where lower deviation = higher score)
+      // STRICT SCORING: Much more sensitive to deviations for grease oxidation analysis
+      const normalizedDeviation = Math.min(avgWeightedDeviation / 0.02, 5); // Much stricter normalization (0.02 vs 0.1, cap at 5x vs 10x)
+      const score = Math.max(0, Math.min(100, 100 * Math.exp(-normalizedDeviation * 1.5))); // Steeper decay (1.5 vs 0.5)
+
+      scores[sample.filename] = Math.round(score);
+    });
+
+    return scores;
+  }, [baseline, samples, abnormalityWeights, differenceData]);
+
+  // Update parent component with scores when they change
+  React.useEffect(() => {
+    if (onScoreUpdate && Object.keys(sampleScores).length > 0) {
+      onScoreUpdate(sampleScores);
+    }
+  }, [sampleScores, onScoreUpdate]);
+
   // Find the corresponding File object for the selected sample
   const selectedSampleFile = sampleFiles && selectedSampleName ? 
     Array.from(sampleFiles).find(file => file.name === selectedSampleName) : 

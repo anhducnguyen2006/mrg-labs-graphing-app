@@ -21,7 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { SearchIcon, SmallCloseIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { FiHeart, FiArrowUp, FiArrowDown } from 'react-icons/fi';
-import { FaHeart, FaSortAlphaDown, FaSortAlphaUp, FaHeart as FaHeartFilled } from 'react-icons/fa';
+import { FaHeart, FaSortAlphaDown, FaSortAlphaUp, FaHeart as FaHeartFilled, FaSortNumericDown, FaSortNumericUp } from 'react-icons/fa';
 import { ParsedCSV } from '../types';
 
 interface Props {
@@ -30,19 +30,23 @@ interface Props {
   onSelectSample: (name: string) => void;
   onRemoveSample: (name: string) => void;
   onToggleFavorite: (filename: string) => void;
+  sampleScores?: { [filename: string]: number };
 }
 
-type SortOption = 'name-asc' | 'name-desc' | 'favorites' | 'date-added';
+type SortOption = 'name-asc' | 'name-desc' | 'favorites' | 'date-added' | 'score-desc' | 'score-asc';
+type FilterOption = 'all' | 'green' | 'yellow' | 'red';
 
 const SampleSidebar: React.FC<Props> = ({
   samples,
   selectedSampleName,
   onSelectSample,
   onRemoveSample,
-  onToggleFavorite
+  onToggleFavorite,
+  sampleScores = {}
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+  const [filterBy, setFilterBy] = useState<FilterOption>('all');
 
   const getSortLabel = (sortOption: SortOption) => {
     switch (sortOption) {
@@ -50,24 +54,48 @@ const SampleSidebar: React.FC<Props> = ({
       case 'name-desc': return 'Name (Z-A)';
       case 'favorites': return 'Favorites First';
       case 'date-added': return 'Recently Added';
+      case 'score-desc': return 'Best Score First';
+      case 'score-asc': return 'Worst Score First';
       default: return 'Name (A-Z)';
     }
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 95) return 'green';  // STRICT: Only excellent samples get green (95+ vs 90+)
+    if (score >= 85) return 'yellow'; // STRICT: Warning threshold raised (85+ vs 70+)
+    return 'red';                     // STRICT: Critical threshold now <85 vs <70
+  };
+
+  const getScoreCategory = (score: number): FilterOption => {
+    if (score >= 95) return 'green';  // STRICT: Only excellent samples get green (95+ vs 90+)
+    if (score >= 85) return 'yellow'; // STRICT: Warning threshold raised (85+ vs 70+)
+    return 'red';                     // STRICT: Critical threshold now <85 vs <70
   };
 
   const getSortIcon = (sortOption: SortOption) => {
     switch (sortOption) {
       case 'name-asc': return <FaSortAlphaDown />;
       case 'name-desc': return <FaSortAlphaUp />;
-      case 'favorites': return <FaHeartFilled color="red.500" />;
+      case 'favorites': return <FaHeartFilled color="#E53E3E" />;
       case 'date-added': return <FiArrowDown />;
+      case 'score-desc': return <FiArrowDown />;
+      case 'score-asc': return <FiArrowUp />;
       default: return <FaSortAlphaDown />;
     }
   };
 
   const filteredAndSortedSamples = useMemo(() => {
-    const filtered = samples.filter(sample =>
+    let filtered = samples.filter(sample =>
       sample.filename.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Apply score filter
+    if (filterBy !== 'all') {
+      filtered = filtered.filter(sample => {
+        const score = sampleScores[sample.filename] ?? 0;
+        return getScoreCategory(score) === filterBy;
+      });
+    }
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
@@ -88,6 +116,18 @@ const SampleSidebar: React.FC<Props> = ({
           const aIndex = samples.indexOf(a);
           const bIndex = samples.indexOf(b);
           return bIndex - aIndex;
+
+        case 'score-desc':
+          // Sort by score (highest first)
+          const scoreA = sampleScores[a.filename] ?? 0;
+          const scoreB = sampleScores[b.filename] ?? 0;
+          return scoreB - scoreA;
+
+        case 'score-asc':
+          // Sort by score (lowest first)
+          const scoreA2 = sampleScores[a.filename] ?? 0;
+          const scoreB2 = sampleScores[b.filename] ?? 0;
+          return scoreA2 - scoreB2;
         
         case 'name-asc':
         default:
@@ -95,7 +135,7 @@ const SampleSidebar: React.FC<Props> = ({
           return a.filename.localeCompare(b.filename);
       }
     });
-  }, [samples, searchTerm, sortBy]);
+  }, [samples, searchTerm, sortBy, filterBy, sampleScores]);
 
   return (
     <Box
@@ -105,10 +145,38 @@ const SampleSidebar: React.FC<Props> = ({
       borderRight="1px"
       borderColor="gray.200"
       p={4}
+      display="flex"
+      flexDirection="column"
     >
-      <VStack align="start" spacing={4}>
+      <VStack align="start" spacing={4} flex={1} h="100%">
         {/* Sample Files Section */}
         <Text fontSize="lg" fontWeight="bold">Sample Files</Text>
+
+        {/* Selected Sample Headline */}
+        {selectedSampleName && (
+          <Box w="100%" p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+            <Text fontSize="sm" fontWeight="medium" color="blue.600" mb={1}>
+              Currently Selected:
+            </Text>
+            <Flex align="center" justify="space-between">
+              <Text fontSize="md" fontWeight="bold" color="blue.800" noOfLines={1} flex={1} mr={2}>
+                {selectedSampleName}
+              </Text>
+              {sampleScores && sampleScores[selectedSampleName] !== undefined && (
+                <Badge
+                  colorScheme={getScoreColor(sampleScores[selectedSampleName])}
+                  size="md"
+                  fontSize="sm"
+                  fontWeight="bold"
+                  px={3}
+                  py={1}
+                >
+                  Score: {Math.round(sampleScores[selectedSampleName])}
+                </Badge>
+              )}
+            </Flex>
+          </Box>
+        )}
 
         <VStack w="100%" spacing={3}>
           <InputGroup>
@@ -129,6 +197,53 @@ const SampleSidebar: React.FC<Props> = ({
               }}
             />
           </InputGroup>
+
+          {/* Filter Controls */}
+          {sampleScores && Object.keys(sampleScores).length > 0 && (
+            <Box w="100%">
+              <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={2}>
+                Anomaly Filter
+              </Text>
+              <HStack spacing={2} w="100%">
+                <Button
+                  size="xs"
+                  leftIcon={<Box w={2} h={2} bg="green.500" borderRadius="full" />}
+                  variant={filterBy === 'green' ? 'solid' : 'outline'}
+                  colorScheme={filterBy === 'green' ? 'green' : 'gray'}
+                  onClick={() => setFilterBy(filterBy === 'green' ? 'all' : 'green')}
+                  flex={1}
+                  fontSize="xs"
+                >
+                  Good ({samples.filter(s => sampleScores[s.filename] >= 95).length})
+                </Button>
+                <Button
+                  size="xs"
+                  leftIcon={<Box w={2} h={2} bg="yellow.500" borderRadius="full" />}
+                  variant={filterBy === 'yellow' ? 'solid' : 'outline'}
+                  colorScheme={filterBy === 'yellow' ? 'yellow' : 'gray'}
+                  onClick={() => setFilterBy(filterBy === 'yellow' ? 'all' : 'yellow')}
+                  flex={1}
+                  fontSize="xs"
+                >
+                  Warning ({samples.filter(s => {
+                    const score = sampleScores[s.filename];
+                    return score >= 85 && score < 95;
+                  }).length})
+                </Button>
+                <Button
+                  size="xs"
+                  leftIcon={<Box w={2} h={2} bg="red.500" borderRadius="full" />}
+                  variant={filterBy === 'red' ? 'solid' : 'outline'}
+                  colorScheme={filterBy === 'red' ? 'red' : 'gray'}
+                  onClick={() => setFilterBy(filterBy === 'red' ? 'all' : 'red')}
+                  flex={1}
+                  fontSize="xs"
+                >
+                  Critical ({samples.filter(s => sampleScores[s.filename] < 85).length})
+                </Button>
+              </HStack>
+            </Box>
+          )}
 
           <Box w="100%">
             <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
@@ -229,6 +344,40 @@ const SampleSidebar: React.FC<Props> = ({
                 >
                   Recently Added
                 </MenuItem>
+
+                {/* Score Sorting - Only show if scores are available */}
+                {sampleScores && Object.keys(sampleScores).length > 0 && (
+                  <>
+                    <MenuDivider />
+                    <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                      ANOMALY SCORE
+                    </Text>
+                    <MenuItem
+                      icon={<FaSortNumericDown />}
+                      onClick={() => setSortBy('score-desc')}
+                      bg={sortBy === 'score-desc' ? 'blue.50' : 'transparent'}
+                      color={sortBy === 'score-desc' ? 'blue.700' : 'gray.700'}
+                      fontWeight={sortBy === 'score-desc' ? 'semibold' : 'normal'}
+                      _hover={{ bg: 'gray.50' }}
+                      borderRadius="md"
+                      mx={2}
+                    >
+                      Highest Score First
+                    </MenuItem>
+                    <MenuItem
+                      icon={<FaSortNumericUp />}
+                      onClick={() => setSortBy('score-asc')}
+                      bg={sortBy === 'score-asc' ? 'blue.50' : 'transparent'}
+                      color={sortBy === 'score-asc' ? 'blue.700' : 'gray.700'}
+                      fontWeight={sortBy === 'score-asc' ? 'semibold' : 'normal'}
+                      _hover={{ bg: 'gray.50' }}
+                      borderRadius="md"
+                      mx={2}
+                    >
+                      Lowest Score First
+                    </MenuItem>
+                  </>
+                )}
               </MenuList>
             </Menu>
           </Box>
@@ -249,7 +398,7 @@ const SampleSidebar: React.FC<Props> = ({
           </Flex>
         )}
 
-        <Box w="100%" flex={1} overflowY="auto">
+        <Box w="100%" flex={1} overflowY="auto" minH={0}>
           <List spacing={2}>
             {filteredAndSortedSamples.map((sample, index) => (
               <ListItem key={sample.filename}>
@@ -306,6 +455,18 @@ const SampleSidebar: React.FC<Props> = ({
                       >
                         {sample.filename}
                       </Text>
+                      {/* Score Badge */}
+                      {sampleScores && sampleScores[sample.filename] !== undefined && (
+                        <Badge
+                          colorScheme={getScoreColor(sampleScores[sample.filename])}
+                          size="sm"
+                          fontSize="xs"
+                          fontWeight="bold"
+                          ml={2}
+                        >
+                          {Math.round(sampleScores[sample.filename])}
+                        </Badge>
+                      )}
                     </Flex>
                     <Text fontSize="xs" color="gray.500">
                       {sample.x?.length || 0} data points
