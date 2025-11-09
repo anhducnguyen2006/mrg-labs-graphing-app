@@ -1,5 +1,6 @@
 import React, { useRef, useMemo } from 'react';
-import { Box, VStack, Text, HStack, Button } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, Button, Icon } from '@chakra-ui/react';
+import { ViewIcon, ViewOffIcon, RepeatIcon } from '@chakra-ui/icons';
 import { ParsedCSV } from '../types';
 import GraphSummary from './GraphSummary';
 import DeviationHeatBar from './DeviationHeatBar';
@@ -251,16 +252,17 @@ const GraphPreview: React.FC<Props> = ({
   })() : undefined;
 
   return (
-    <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
+    <Box w="100%">
       <VStack align="start" spacing={4}>
         {hasData && (
-          <HStack justify="flex-end" w="100%">
+          <HStack justify="space-between" w="100%" mb={4}>
+            <Text fontSize="2xl" fontWeight="bold">FTIR Graph Analysis</Text>
             <HStack spacing={2}>
-              <Button size="sm" onClick={handleToggleGrid} variant="outline">
+              <Button size="sm" onClick={handleToggleGrid} variant="outline" leftIcon={showGrid ? <ViewOffIcon /> : <ViewIcon />}>
                 {showGrid ? 'Hide Grid' : 'Show Grid'}
               </Button>
-              <Button size="sm" onClick={handleResetZoom} variant="outline">
-                Reset All Zoom
+              <Button size="sm" onClick={handleResetZoom} variant="outline" leftIcon={<RepeatIcon />}>
+                Reset Zoom
               </Button>
             </HStack>
           </HStack>
@@ -268,11 +270,33 @@ const GraphPreview: React.FC<Props> = ({
 
         {/* Main Spectroscopy Graph */}
         {hasData ? (
-          <Box w="100%" h="400px">
+          <Box w="100%" h="500px" bg="white" p={12} borderWidth="1px" borderColor="gray.200" rounded="lg" shadow="sm">
               <Line key={resetKey} ref={chartRef} data={data!} options={{
               responsive: true,
               maintainAspectRatio: false,
-              animation: false,
+              animation: {
+                duration: 300,
+                easing: 'easeInOutQuart',
+                delay: (context) => {
+                  let delay = 0;
+                  if (context.type === 'data' && context.mode === 'default') {
+                    delay = context.dataIndex * 0.5;
+                  }
+                  return delay;
+                }
+              },
+              transitions: {
+                zoom: {
+                  animation: {
+                    duration: 0
+                  }
+                },
+                active: {
+                  animation: {
+                    duration: 0
+                  }
+                }
+              },
               interaction: {
                 intersect: false,
                 mode: 'index'
@@ -359,15 +383,17 @@ const GraphPreview: React.FC<Props> = ({
                   }
                 },
                 legend: { 
-                  position: 'top',
+                  position: 'bottom',
                   display: true,
+                  align: 'end',
                   labels: {
-                    font: { size: 13, weight: 'bold' },
+                    font: { size: 12 },
                     color: '#333',
-                    usePointStyle: false,  // Don't use point style, use box
+                    usePointStyle: true,  // Use circular point style
+                    pointStyle: 'circle',
                     padding: 15,
-                    boxWidth: 15,
-                    boxHeight: 15,
+                    boxWidth: 8,
+                    boxHeight: 8,
                     generateLabels: (chart) => {
                       const datasets = chart.data.datasets;
                       return datasets.map((dataset, i) => {
