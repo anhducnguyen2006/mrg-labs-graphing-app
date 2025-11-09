@@ -210,21 +210,14 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
   return (
     <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
       <VStack align="start" spacing={4}>
-        <HStack justify="space-between" w="100%">
-          <Box>
-            <Text fontWeight="bold" fontSize="md">
-              Grease Oxidation Heat Map
-            </Text>
-            <Text fontSize="xs" color="gray.600">
-              Color intensity shows deviation magnitude: Green (low) → Yellow (medium) → Red (high oxidation)
-            </Text>
-          </Box>
-          {hasData && (
-            <Button size="sm" onClick={handleResetZoom} variant="outline">
-              Reset View
-            </Button>
-          )}
-        </HStack>
+        <Box w="100%">
+          <Text fontWeight="bold" fontSize="md">
+            Grease Oxidation Heat Map
+          </Text>
+          <Text fontSize="xs" color="gray.600">
+            Color intensity shows deviation magnitude: Green (low) → Yellow (medium) → Red (high oxidation)
+          </Text>
+        </Box>
 
         {hasData ? (
           <VStack w="100%" spacing={3}>
@@ -303,10 +296,6 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                 <Text color="orange.600">
                   {(deviation.reduce((a, b) => a + b, 0) / deviation.length).toFixed(4)}
                 </Text>
-              </Box>
-              <Box>
-                <Text fontWeight="semibold" color="gray.700">Data Points:</Text>
-                <Text color="blue.600">{x.length}</Text>
               </Box>
             </HStack>
 
