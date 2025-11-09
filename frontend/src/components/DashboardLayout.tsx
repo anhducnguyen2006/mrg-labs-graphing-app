@@ -51,46 +51,68 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
             {/* Main content area with sidebar */}
             <Flex flex={1} position="relative" overflow="hidden">
-                {/* Sidebar */}
-                <MotionBox
-                    initial={false}
-                    animate={{
-                        width: isSidebarOpen && !isMobile ? sidebarWidth : 0,
-                        opacity: isSidebarOpen ? 1 : 0
-                    }}
-                    transition={{
-                        duration: 0.3,
-                        ease: [0.4, 0, 0.2, 1] // Smooth easing curve
-                    }}
-                    position={isMobile ? 'absolute' : 'relative'}
-                    left={0}
-                    top={0}
-                    h="full"
-                    overflow="hidden"
-                    zIndex={isMobile ? 999 : 1}
-                    boxShadow={isMobile ? '2xl' : 'none'}
-                >
-                    <Box w={`${sidebarWidth}px`} h="full">
-                        {sidebar}
-                    </Box>
-                </MotionBox>
-
-                {/* Overlay for mobile when sidebar is open */}
-                {isMobile && isSidebarOpen && (
+                {/* Sidebar - Desktop: slides in/out, Mobile: overlay */}
+                {isMobile ? (
+                    // Mobile: Absolute positioned overlay
+                    <AnimatePresence>
+                        {isSidebarOpen && (
+                            <>
+                                <MotionBox
+                                    key="mobile-sidebar"
+                                    initial={{ x: -sidebarWidth }}
+                                    animate={{ x: 0 }}
+                                    exit={{ x: -sidebarWidth }}
+                                    transition={{
+                                        duration: 0.3,
+                                        ease: [0.4, 0, 0.2, 1]
+                                    }}
+                                    position="absolute"
+                                    left={0}
+                                    top={0}
+                                    w={`${sidebarWidth}px`}
+                                    h="full"
+                                    zIndex={999}
+                                    boxShadow="2xl"
+                                >
+                                    {sidebar}
+                                </MotionBox>
+                                <MotionBox
+                                    key="mobile-overlay"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    position="absolute"
+                                    top={0}
+                                    left={0}
+                                    right={0}
+                                    bottom={0}
+                                    bg="blackAlpha.600"
+                                    zIndex={998}
+                                    onClick={handleToggleSidebar}
+                                />
+                            </>
+                        )}
+                    </AnimatePresence>
+                ) : (
+                    // Desktop: Width-based animation
                     <MotionBox
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        position="absolute"
-                        top={0}
-                        left={0}
-                        right={0}
-                        bottom={0}
-                        bg="blackAlpha.600"
-                        zIndex={998}
-                        onClick={handleToggleSidebar}
-                    />
+                        initial={false}
+                        animate={{
+                            width: isSidebarOpen ? sidebarWidth : 0
+                        }}
+                        transition={{
+                            duration: 0.3,
+                            ease: [0.4, 0, 0.2, 1]
+                        }}
+                        position="relative"
+                        h="full"
+                        overflow="hidden"
+                    >
+                        <Box w={`${sidebarWidth}px`} h="full">
+                            {sidebar}
+                        </Box>
+                    </MotionBox>
                 )}
 
                 {/* Main content */}
