@@ -109,7 +109,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
       
       toast({
         title: 'Analysis Complete',
-        description: 'AI-powered graph analysis generated successfully!',
+        description: 'Infrared grease oxidation analysis completed successfully!',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -153,7 +153,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
         <HStack>
           <Icon as={InfoIcon} color="gray.400" />
           <Text color="gray.600" fontSize="sm">
-            Upload both baseline and sample data to see AI-powered analysis
+            Upload baseline (fresh grease) and sample data to see infrared grease oxidation analysis
           </Text>
         </HStack>
       </Box>
@@ -168,7 +168,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
           <HStack>
             <Icon as={InfoIcon} color="blue.500" />
             <Text fontWeight="bold" color="blue.700">
-              AI-Powered Graph Analysis
+              IR Grease Oxidation Analysis
             </Text>
             {analysis && (
               <Badge colorScheme="green" variant="solid">
@@ -195,7 +195,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
           <VStack spacing={3}>
             <Spinner size="lg" color="blue.500" />
             <Text color="gray.600">
-              Analyzing your graph with AI... This may take a moment.
+              Analyzing infrared spectroscopy data for grease oxidation... This may take a moment.
             </Text>
           </VStack>
         </Box>
@@ -282,7 +282,7 @@ const GraphSummary: React.FC<GraphSummaryProps> = ({
               color="gray.700"
               mb={2}
             >
-              AI Insights & Interpretation
+              Grease Analysis & Maintenance Insights
             </Button>
             
             <Collapse in={isInsightsOpen} animateOpacity>

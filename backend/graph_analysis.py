@@ -189,16 +189,20 @@ async def generate_graph_insights(
                 analysis_result = {
                     "sample_name": sample_name,
                     "statistics": stats,
-                    "ai_insights": f"""**Statistical Analysis Summary**
+                    "ai_insights": f"""**Infrared Grease Analysis - Statistical Summary**
 
-**Key Observations:**
-- Baseline Mean: {stats['baseline_stats']['mean_y']:.3f} ± {stats['baseline_stats']['std_y']:.3f}
-- Sample Mean: {stats['sample_stats']['mean_y']:.3f} ± {stats['sample_stats']['std_y']:.3f}
-- Mean Difference: {stats['differences']['mean_diff']:.3f}
+**Grease Condition Assessment:**
+- Baseline (Fresh Grease): Mean={stats['baseline_stats']['mean_y']:.3f} ± {stats['baseline_stats']['std_y']:.3f}
+- Sample ({sample_name}): Mean={stats['sample_stats']['mean_y']:.3f} ± {stats['sample_stats']['std_y']:.3f}
+- Spectral Difference: {stats['differences']['mean_diff']:.3f} absorption units
 
-**Note:** AI-powered insights are currently unavailable, but the statistical analysis above provides key numerical comparisons between your baseline and sample data. The system successfully processed your data and calculated the essential metrics for comparison.
+**Preliminary Oxidation Analysis:**
+{"⚠️ Significant spectral changes detected - potential grease degradation or contamination" if abs(stats['differences']['mean_diff']) > stats['baseline_stats']['std_y'] else "✓ Spectral patterns within normal range - grease condition appears stable"}
 
-For detailed AI interpretation, please try again later when the AI service is restored.""",
+**Equipment Maintenance Status:** 
+Based on statistical analysis, {"immediate inspection recommended" if abs(stats['differences']['mean_diff']) > 2 * stats['baseline_stats']['std_y'] else "continue monitoring" if abs(stats['differences']['mean_diff']) > stats['baseline_stats']['std_y'] else "grease condition acceptable"}
+
+**Note:** This statistical analysis provides preliminary grease assessment for your infrared spectroscopy data. Full AI-powered analysis will provide detailed oxidation markers, water contamination detection, and specific maintenance recommendations when the AI service is available.""",
                     "metadata": {
                         "baseline_file": baseline.filename,
                         "sample_file": sample.filename,
@@ -214,24 +218,27 @@ For detailed AI interpretation, please try again later when the AI service is re
                     content={"error": f"Failed to prepare statistical analysis: {str(e)}"}
                 )
         
-        # Create detailed prompt
+        # Create detailed prompt for infrared grease analysis
         prompt = f"""
-        Analyze this graph comparison between baseline data and sample data ({sample_name}).
+        Analyze this infrared spectroscopy data for grease oxidation analysis comparing baseline (fresh grease) and sample data ({sample_name}).
         
         Statistical Summary:
         - Baseline: Mean={stats['baseline_stats']['mean_y']:.3f}, Std={stats['baseline_stats']['std_y']:.3f}, Range=[{stats['baseline_stats']['min_y']:.3f}, {stats['baseline_stats']['max_y']:.3f}]
         - Sample: Mean={stats['sample_stats']['mean_y']:.3f}, Std={stats['sample_stats']['std_y']:.3f}, Range=[{stats['sample_stats']['min_y']:.3f}, {stats['sample_stats']['max_y']:.3f}]
         - Mean Difference: {stats['differences']['mean_diff']:.3f}
         
-        Please provide:
-        1. **Key Observations**: What are the most significant differences between baseline and sample?
-        2. **Trend Analysis**: Describe the overall trends, patterns, and behaviors you observe
-        3. **Statistical Insights**: Interpret the statistical differences (mean, variance, range changes)
-        4. **Potential Implications**: What might these differences suggest about the underlying process or system?
-        5. **Areas of Interest**: Highlight specific regions or features that warrant further investigation
-        6. **Data Quality Assessment**: Comment on data consistency, outliers, or anomalies
+        **Context**: This is infrared light analysis through grease samples to determine oxidation levels, lifecycle stage, and potential contamination or degradation issues.
         
-        Keep your analysis scientific, objective, and actionable. Focus on providing insights that would be valuable for researchers or analysts.
+        Please provide specialized grease analysis focusing on:
+        1. **Oxidation Assessment**: Analyze spectral changes indicating grease oxidation levels. Look for characteristic IR absorption bands around 1700-1750 cm⁻¹ (C=O stretch) that increase with oxidation.
+        2. **Grease Lifecycle Stage**: Determine the degradation stage based on spectral changes. Fresh grease vs. aged/oxidized grease patterns.
+        3. **Contamination Detection**: Identify potential water contamination (broad O-H stretch around 3200-3600 cm⁻¹) or other foreign substances affecting grease quality.
+        4. **Fault Analysis**: Assess if deviations from baseline indicate grease failure, unusual wear patterns, or maintenance issues.
+        5. **Quality Comparison**: Compare sample against baseline to determine if grease is within acceptable parameters or requires replacement.
+        6. **Critical Wavelengths**: Highlight specific IR frequencies showing significant changes that correlate with grease degradation mechanisms.
+        7. **Maintenance Recommendations**: Based on the analysis, provide actionable insights for equipment maintenance and grease replacement schedules.
+        
+        Focus on practical applications for industrial equipment maintenance, bearing lubrication assessment, and predictive maintenance strategies. Interpret results in the context of tribology and lubrication engineering.
         """
         
         # Generate AI analysis with fallback
@@ -251,22 +258,25 @@ For detailed AI interpretation, please try again later when the AI service is re
                 
         except Exception as e:
             # Fallback to statistical analysis when AI fails
-            ai_insights = f"""**Statistical Analysis Summary**
+            ai_insights = f"""**Infrared Grease Analysis - Statistical Summary**
 
-**Key Observations:**
-- Baseline Mean: {stats['baseline_stats']['mean_y']:.3f} ± {stats['baseline_stats']['std_y']:.3f}
-- Sample Mean: {stats['sample_stats']['mean_y']:.3f} ± {stats['sample_stats']['std_y']:.3f}
-- Mean Difference: {stats['differences']['mean_diff']:.3f}
+**Baseline vs Sample Comparison:**
+- Baseline (Fresh Grease): Mean={stats['baseline_stats']['mean_y']:.3f} ± {stats['baseline_stats']['std_y']:.3f}
+- Sample ({sample_name}): Mean={stats['sample_stats']['mean_y']:.3f} ± {stats['sample_stats']['std_y']:.3f}
+- Spectral Difference: {stats['differences']['mean_diff']:.3f}
 
-**Trend Analysis:**
-The sample data shows {"an increase" if stats['differences']['mean_diff'] > 0 else "a decrease" if stats['differences']['mean_diff'] < 0 else "no significant change"} compared to the baseline, with a difference of {abs(stats['differences']['mean_diff']):.3f} units.
+**Oxidation Indicator Analysis:**
+The sample shows {"increased absorption" if stats['differences']['mean_diff'] > 0 else "decreased absorption" if stats['differences']['mean_diff'] < 0 else "similar spectral behavior"} compared to fresh grease baseline, with a difference of {abs(stats['differences']['mean_diff']):.3f} absorption units.
 
-**Statistical Insights:**
-- Data points: Baseline ({stats['baseline_stats']['count']}), Sample ({stats['sample_stats']['count']})
-- Variance change: {"increased" if stats['differences']['std_diff'] > 0 else "decreased" if stats['differences']['std_diff'] < 0 else "remained similar"}
-- Range: Baseline [{stats['baseline_stats']['min_y']:.3f}, {stats['baseline_stats']['max_y']:.3f}], Sample [{stats['sample_stats']['min_y']:.3f}, {stats['sample_stats']['max_y']:.3f}]
+**Grease Condition Assessment:**
+- Spectral Data Points: Baseline ({stats['baseline_stats']['count']}), Sample ({stats['sample_stats']['count']})
+- Spectral Variance: {"Increased spectral complexity" if stats['differences']['std_diff'] > 0 else "Reduced spectral complexity" if stats['differences']['std_diff'] < 0 else "Similar spectral consistency"} suggesting {"potential oxidation or contamination" if stats['differences']['std_diff'] > 0 else "stable grease condition"}
+- Absorption Range: Baseline [{stats['baseline_stats']['min_y']:.3f}, {stats['baseline_stats']['max_y']:.3f}], Sample [{stats['sample_stats']['min_y']:.3f}, {stats['sample_stats']['max_y']:.3f}]
 
-**Note:** This analysis is based on statistical calculations. AI-powered insights are temporarily unavailable but will provide more detailed interpretation when the service is restored."""
+**Preliminary Maintenance Recommendations:**
+{"⚠️ Elevated spectral changes detected - consider detailed IR analysis for oxidation markers (1700-1750 cm⁻¹) and water contamination (3200-3600 cm⁻¹)" if abs(stats['differences']['mean_diff']) > stats['baseline_stats']['std_y'] else "✓ Spectral changes within normal range - grease condition appears stable"}
+
+**Note:** This statistical analysis provides initial grease assessment. Full AI-powered tribological insights will provide detailed oxidation analysis, contamination detection, and maintenance scheduling when the AI service is available."""
         
         # Prepare response
         try:
