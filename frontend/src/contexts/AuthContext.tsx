@@ -25,12 +25,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Check authentication status on mount - TEMPORARILY DISABLED FOR DEVELOPMENT
+    // Check authentication status on mount
     useEffect(() => {
-        // Skip auth check - pretend user is always logged in for development
-        setUser({ username: 'Dev User' });
-        setIsLoading(false);
-        // checkAuthStatus(); // Uncomment to re-enable auth
+        checkAuthStatus();
     }, []);
 
     const checkAuthStatus = async () => {
