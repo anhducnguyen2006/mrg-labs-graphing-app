@@ -80,27 +80,22 @@ pip install -r requirements.txt
 
 #### 3.3. Configure Environment Variables
 
-Create a `.env` file in the **root directory** (not in backend/):
+Create a `.env` file in the `backend/` directory:
 
 ```bash
-# Copy the example file
-cp .env.example .env
-```
-
-Then edit the `.env` file with your actual values:
-
-```bash
+cat > .env << 'EOF'
 # Database Configuration
 DB_HOST=localhost
 DB_USER=root
 DB_PASS=your_mysql_password
 DB_NAME=mrg_labs_db
 
+# Session Secret (generate a random string)
+SESSION_SECRET=$(openssl rand -hex 32)
+
 # Gemini AI API Key (for AI features)
 GEMINI_API_KEY=your_gemini_api_key_here
-
-# Session Secret (optional - will auto-generate if not provided)
-# SESSION_SECRET=your_random_secret_key
+EOF
 ```
 
 **Get a Gemini API Key**:
@@ -108,8 +103,6 @@ GEMINI_API_KEY=your_gemini_api_key_here
 1. Visit https://makersuite.google.com/app/apikey
 2. Create a new API key
 3. Add it to your `.env` file
-
-**Security Note**: Never commit the `.env` file to git. It's already included in `.gitignore` to prevent accidental commits.
 
 #### 3.4. Test Backend
 
