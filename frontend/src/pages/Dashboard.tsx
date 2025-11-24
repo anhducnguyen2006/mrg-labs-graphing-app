@@ -17,7 +17,6 @@ import GraphPreview from '../components/GraphPreview';
 import SampleSidebar from '../components/SampleSidebar';
 import ExportDialog from '../components/ExportDialog';
 import DashboardLayout from '../components/DashboardLayout';
-import Chatbox from '../components/Chatbox';
 import ChangePasswordDialog from '../components/ChangePasswordDialog';
 import AbnormalityWeightDialog from '../components/AbnormalityWeightDialog';
 import type { RangeWeight } from '../components/AbnormalityWeightDialog';
@@ -32,7 +31,7 @@ const Dashboard: React.FC = () => {
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
   const [abnormalityWeights, setAbnormalityWeights] = useState<RangeWeight[]>([]);
   const [sampleScores, setSampleScores] = useState<{ [filename: string]: number }>({});
-  const [scoringMethod, setScoringMethod] = useState<'area' | 'rmse' | 'pearson'>('area'); // Default to area difference
+  const [scoringMethod, setScoringMethod] = useState<'area' | 'rmse' | 'hybrid' | 'pearson'>('hybrid'); // Default to hybrid method
   const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
   const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
   const { isOpen: isWeightOpen, onOpen: onWeightOpen, onClose: onWeightClose } = useDisclosure();
@@ -188,6 +187,18 @@ const Dashboard: React.FC = () => {
                     RMSE Deviation
                   </Button>
                   <Button
+                    onClick={() => setScoringMethod('hybrid')}
+                    colorScheme={scoringMethod === 'hybrid' ? 'blue' : 'gray'}
+                    bg={scoringMethod === 'hybrid' ? 'blue.500' : 'white'}
+                    color={scoringMethod === 'hybrid' ? 'white' : 'gray.700'}
+                    _hover={{
+                      bg: scoringMethod === 'hybrid' ? 'blue.600' : 'gray.100'
+                    }}
+                    fontWeight={scoringMethod === 'hybrid' ? 'bold' : 'normal'}
+                  >
+                    Hybrid (RMSE + Shape)
+                  </Button>
+                  <Button
                     onClick={() => setScoringMethod('pearson')}
                     colorScheme={scoringMethod === 'pearson' ? 'blue' : 'gray'}
                     bg={scoringMethod === 'pearson' ? 'blue.500' : 'white'}
@@ -293,21 +304,6 @@ const Dashboard: React.FC = () => {
           });
         }}
         initialWeights={abnormalityWeights}
-      />
-
-      {/* AI Chatbox */}
-      <Chatbox
-        graphContext={
-          baselineParsed && selectedSample
-            ? `Analyzing comparison between ${baselineParsed.filename} (baseline) and ${selectedSample} (sample)`
-            : undefined
-        }
-        graphData={{
-          baseline: baselineParsed,
-          selectedSample: sampleParsed.find(s => s.filename === selectedSample),
-          selectedSampleName: selectedSample,
-          allSamples: sampleParsed
-        }}
       />
     </DashboardLayout>
   );

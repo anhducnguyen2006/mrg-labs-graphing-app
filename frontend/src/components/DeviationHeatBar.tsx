@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Box, VStack, Text, HStack, Button } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, Button, Badge } from '@chakra-ui/react';
 
 interface RangeWeight {
   min: number;
@@ -68,7 +68,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
     }
   };
 
-  // Create gradient segments
+  // Create gradient segments with better hover interaction
   const createGradientSegments = () => {
     if (!hasData) return [];
     
@@ -79,6 +79,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
     for (let i = 0; i < x.length; i++) {
       const color = getColor(deviation[i]);
       const left = i * segmentWidth;
+      const deviationPercent = ((deviation[i] / maxDeviation) * 100).toFixed(1);
       
       segments.push(
         <Box
@@ -88,12 +89,14 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
           width={`${segmentWidth}%`}
           height="100%"
           backgroundColor={color}
-          title={`Wavenumber: ${Math.round(x[i])} cm⁻¹, Deviation: ${deviation[i].toFixed(4)}`}
-          cursor="pointer"
-          transition="all 0.2s"
+          title={`${Math.round(x[i])} cm⁻¹\nDeviation: ${deviation[i].toFixed(4)} (${deviationPercent}% of max)`}
+          cursor="crosshair"
+          transition="all 0.15s ease"
           _hover={{
-            transform: 'scaleY(1.1)',
-            zIndex: 10
+            transform: 'scaleY(1.15)',
+            zIndex: 10,
+            boxShadow: '0 0 8px rgba(0,0,0,0.3)',
+            filter: 'brightness(1.2)'
           }}
         />
       );
@@ -102,35 +105,55 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
     return segments;
   };
 
-  // Create wavelength markers
+  // Create wavelength markers - matching main graph ticks
   const createWavelengthMarkers = () => {
     if (!hasData) return [];
     
-    const markers = [];
+    const markers: JSX.Element[] = [];
     const minX = Math.min(...x);
     const maxX = Math.max(...x);
     const range = maxX - minX;
     
-    // Create markers at regular intervals
-    const markerCount = 8;
-    for (let i = 0; i <= markerCount; i++) {
-      const wavelength = maxX - (range * i / markerCount); // Reverse order for IR
-      const position = (i / markerCount) * 100;
-      
-      markers.push(
-        <Box
-          key={i}
-          position="absolute"
-          left={`${position}%`}
-          transform="translateX(-50%)"
-          fontSize="xs"
-          color="gray.600"
-          whiteSpace="nowrap"
-        >
-          {Math.round(wavelength)}
-        </Box>
-      );
-    }
+    // Use standard FTIR ticks that match the main graph
+    const customXTicks = [4000, 3500, 3000, 2500, 2000, 1750, 1500, 1250, 1000, 750, 550];
+    
+    customXTicks.forEach((wavelength) => {
+      if (wavelength >= minX && wavelength <= maxX) {
+        const position = ((maxX - wavelength) / range) * 100; // Reverse for IR
+        
+        markers.push(
+          <Box
+            key={wavelength}
+            position="absolute"
+            left={`${position}%`}
+            transform="translateX(-50%)"
+          >
+            {/* Vertical guide line */}
+            <Box
+              position="absolute"
+              bottom="20px"
+              left="50%"
+              width="1px"
+              height="80px"
+              bg="gray.400"
+              opacity={0.3}
+            />
+            {/* Label */}
+            <Text
+              fontSize="xs"
+              fontWeight="medium"
+              color="gray.700"
+              whiteSpace="nowrap"
+              bg="white"
+              px={1}
+              borderRadius="sm"
+            >
+              {wavelength}
+            </Text>
+          </Box>
+        );
+      }
+    });
     
     return markers;
   };
@@ -210,130 +233,220 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
   return (
     <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
       <VStack align="start" spacing={4}>
-        <Box w="100%">
-          <Text fontWeight="bold" fontSize="md">
-            Grease Oxidation Heat Map
-          </Text>
-          <Text fontSize="xs" color="gray.600">
-            Color intensity shows deviation magnitude: Green (low) → Yellow (medium) → Red (high oxidation)
-          </Text>
+        <Box w="100%" pb={2} borderBottom="2px solid" borderColor="gray.300">
+          <HStack justify="space-between" align="center">
+            <VStack align="start" spacing={1}>
+              <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                Spectral Deviation Heat Map
+              </Text>
+              <Text fontSize="xs" color="gray.600">
+                Visual representation of deviation intensity across the spectrum
+              </Text>
+            </VStack>
+            <HStack spacing={2}>
+              <Box textAlign="center" px={3} py={1} bg="green.100" borderRadius="md">
+                <Text fontSize="xs" fontWeight="bold" color="green.800">Good</Text>
+              </Box>
+              <Box textAlign="center" px={3} py={1} bg="yellow.100" borderRadius="md">
+                <Text fontSize="xs" fontWeight="bold" color="yellow.800">Monitor</Text>
+              </Box>
+              <Box textAlign="center" px={3} py={1} bg="red.100" borderRadius="md">
+                <Text fontSize="xs" fontWeight="bold" color="red.800">Critical</Text>
+              </Box>
+            </HStack>
+          </HStack>
         </Box>
 
         {hasData ? (
-          <VStack w="100%" spacing={3}>
-            {/* Main heat bar */}
+          <VStack w="100%" spacing={4}>
+            {/* Main heat bar with improved visuals */}
             <Box w="100%" position="relative">
-              <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                Deviation Intensity Map {selectedSampleName && `(${selectedSampleName.replace(/\.csv$/i, '')})`}
-              </Text>
-              <Box
-                position="relative"
-                w="100%"
-                h="60px"
-                border="1px solid"
-                borderColor="gray.300"
-                borderRadius="md"
-                overflow="hidden"
-                bg="white"
-              >
-                {/* Weight ranges background */}
-                {createWeightRanges()}
-                {/* Deviation gradient overlay */}
-                {createGradientSegments()}
-              </Box>
-              
-              {/* Wavelength axis */}
-              <Box position="relative" mt={2} h="20px">
-                {createWavelengthMarkers()}
-              </Box>
-              <Text fontSize="xs" color="gray.600" textAlign="center" mt={1}>
-                Wavenumber (cm⁻¹)
-              </Text>
-            </Box>
-
-            {/* Color scale legend */}
-            <Box w="100%" mt={4}>
-              <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                Deviation Scale
-              </Text>
-              <HStack spacing={2} w="100%">
-                <Text fontSize="xs" color="gray.600">
-                  Low
+              <HStack justify="space-between" mb={3}>
+                <Text fontSize="md" fontWeight="bold" color="gray.800">
+                  Deviation Intensity Map
                 </Text>
+                {selectedSampleName && (
+                  <Badge colorScheme="blue" fontSize="xs" px={2} py={1}>
+                    {selectedSampleName.replace(/\.csv$/i, '')}
+                  </Badge>
+                )}
+              </HStack>
+              
+              <Box position="relative" w="100%">
+                {/* Wavelength axis labels above */}
+                <Box position="relative" h="25px" mb={1}>
+                  {createWavelengthMarkers()}
+                </Box>
+                
+                {/* Main heat bar with better height and styling */}
                 <Box
                   position="relative"
-                  flex={1}
-                  h="20px"
-                  border="1px solid"
-                  borderColor="gray.300"
-                  borderRadius="md"
-                  overflow="hidden"
+                  w="100%"
+                  h="80px"
+                  border="2px solid"
+                  borderColor="gray.400"
+                  borderRadius="lg"
+                  overflow="visible"
+                  bg="white"
+                  boxShadow="md"
                 >
-                  {createColorScale()}
+                  {/* Weight ranges background */}
+                  {createWeightRanges()}
+                  {/* Deviation gradient overlay */}
+                  {createGradientSegments()}
                 </Box>
-                <Text fontSize="xs" color="gray.600">
-                  High
+                
+                {/* Axis label */}
+                <Text fontSize="sm" fontWeight="semibold" color="gray.700" textAlign="center" mt={2}>
+                  Wavenumber (cm⁻¹)
                 </Text>
-              </HStack>
-              <HStack justify="space-between" mt={1}>
-                <Text fontSize="xs" color="gray.600">
-                  0.000
-                </Text>
-                <Text fontSize="xs" color="gray.600">
-                  {maxDeviation.toFixed(3)}
-                </Text>
-              </HStack>
+              </Box>
             </Box>
 
-            {/* Statistics */}
-            <HStack spacing={6} fontSize="sm">
-              <Box>
-                <Text fontWeight="semibold" color="gray.700">Max Deviation:</Text>
-                <Text color="red.600">{maxDeviation.toFixed(4)}</Text>
+            {/* Statistics Cards */}
+            <HStack w="100%" spacing={4}>
+              <Box 
+                flex={1} 
+                p={3} 
+                bg="red.50" 
+                borderRadius="lg" 
+                borderWidth="1px" 
+                borderColor="red.200"
+              >
+                <Text fontSize="xs" fontWeight="medium" color="red.700" mb={1}>
+                  Max Deviation
+                </Text>
+                <Text fontSize="lg" fontWeight="bold" color="red.600">
+                  {maxDeviation.toFixed(4)}
+                </Text>
               </Box>
-              <Box>
-                <Text fontWeight="semibold" color="gray.700">Avg Deviation:</Text>
-                <Text color="orange.600">
+              <Box 
+                flex={1} 
+                p={3} 
+                bg="orange.50" 
+                borderRadius="lg" 
+                borderWidth="1px" 
+                borderColor="orange.200"
+              >
+                <Text fontSize="xs" fontWeight="medium" color="orange.700" mb={1}>
+                  Avg Deviation
+                </Text>
+                <Text fontSize="lg" fontWeight="bold" color="orange.600">
                   {(deviation.reduce((a, b) => a + b, 0) / deviation.length).toFixed(4)}
+                </Text>
+              </Box>
+              <Box 
+                flex={1} 
+                p={3} 
+                bg="green.50" 
+                borderRadius="lg" 
+                borderWidth="1px" 
+                borderColor="green.200"
+              >
+                <Text fontSize="xs" fontWeight="medium" color="green.700" mb={1}>
+                  Min Deviation
+                </Text>
+                <Text fontSize="lg" fontWeight="bold" color="green.600">
+                  {minDeviation.toFixed(4)}
                 </Text>
               </Box>
             </HStack>
 
+            {/* Color scale legend */}
+            <Box w="100%" p={3} bg="gray.50" borderRadius="lg" borderWidth="1px" borderColor="gray.200">
+              <Text fontSize="sm" fontWeight="bold" mb={2} color="gray.700">
+                Deviation Color Scale
+              </Text>
+              <VStack spacing={2} align="stretch">
+                <HStack spacing={2}>
+                  <Box
+                    position="relative"
+                    flex={1}
+                    h="30px"
+                    border="2px solid"
+                    borderColor="gray.300"
+                    borderRadius="md"
+                    overflow="hidden"
+                    boxShadow="sm"
+                  >
+                    {createColorScale()}
+                  </Box>
+                </HStack>
+                <HStack justify="space-between">
+                  <HStack spacing={1}>
+                    <Box w="12px" h="12px" bg="rgb(0, 255, 0)" borderRadius="sm" />
+                    <Text fontSize="xs" fontWeight="medium" color="gray.700">
+                      Low (0.000)
+                    </Text>
+                  </HStack>
+                  <HStack spacing={1}>
+                    <Box w="12px" h="12px" bg="rgb(255, 255, 0)" borderRadius="sm" />
+                    <Text fontSize="xs" fontWeight="medium" color="gray.700">
+                      Medium
+                    </Text>
+                  </HStack>
+                  <HStack spacing={1}>
+                    <Box w="12px" h="12px" bg="rgb(255, 0, 0)" borderRadius="sm" />
+                    <Text fontSize="xs" fontWeight="medium" color="gray.700">
+                      High ({maxDeviation.toFixed(3)})
+                    </Text>
+                  </HStack>
+                </HStack>
+              </VStack>
+            </Box>
+
             {/* Weight Ranges Legend */}
             {abnormalityWeights && abnormalityWeights.length > 0 && (
-              <Box w="100%" mt={4}>
-                <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                  Applied Weight Ranges
+              <Box w="100%" p={4} bg="purple.50" borderRadius="lg" borderWidth="2px" borderColor="purple.200">
+                <Text fontSize="sm" fontWeight="bold" mb={3} color="purple.900">
+                  ⚖️ Applied Weight Ranges
                 </Text>
                 <VStack spacing={2} align="stretch">
                   {abnormalityWeights.map((range, index) => {
                     const colors = {
-                      'range_evaporation': 'rgba(255, 99, 71, 0.5)',
-                      'range_other': 'rgba(255, 165, 0, 0.5)', 
-                      'range_oxidation': 'rgba(255, 20, 147, 0.5)'
+                      'range_evaporation': 'rgba(255, 99, 71, 0.6)',
+                      'range_other': 'rgba(255, 165, 0, 0.6)', 
+                      'range_oxidation': 'rgba(255, 20, 147, 0.6)'
                     };
-                    const color = colors[range.key as keyof typeof colors] || 'rgba(128, 128, 128, 0.5)';
+                    const color = colors[range.key as keyof typeof colors] || 'rgba(128, 128, 128, 0.6)';
                     
                     return (
-                      <HStack key={index} spacing={3} fontSize="xs">
+                      <HStack 
+                        key={index} 
+                        spacing={3} 
+                        p={2} 
+                        bg="white" 
+                        borderRadius="md"
+                        borderWidth="1px"
+                        borderColor="purple.100"
+                      >
                         <Box
-                          w="20px"
-                          h="12px"
+                          w="24px"
+                          h="24px"
                           backgroundColor={color}
-                          border="1px solid"
-                          borderColor="gray.300"
-                          borderRadius="sm"
+                          border="2px solid"
+                          borderColor="gray.400"
+                          borderRadius="md"
+                          flexShrink={0}
                         />
-                        <Text flex={1} color="gray.700">
-                          {range.label}
-                        </Text>
-                        <Text fontWeight="semibold" color="blue.600">
-                          {range.weight}%
-                        </Text>
+                        <VStack align="start" spacing={0} flex={1}>
+                          <Text fontSize="xs" fontWeight="bold" color="gray.800">
+                            {range.label}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            {range.min} - {range.max} cm⁻¹
+                          </Text>
+                        </VStack>
+                        <Badge colorScheme="purple" fontSize="xs" px={2} py={1}>
+                          {range.weight}% weight
+                        </Badge>
                       </HStack>
                     );
                   })}
                 </VStack>
+                <Text fontSize="xs" color="purple.700" mt={2} fontStyle="italic">
+                  💡 Background colors on heat map show these weighted regions
+                </Text>
               </Box>
             )}
           </VStack>
@@ -343,17 +456,38 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
           </Text>
         )}
 
-        {/* Info box */}
+        {/* Interactive guidance */}
         {hasData && (
-          <Box w="100%" p={3} bg="blue.50" rounded="md" borderWidth="1px" borderColor="blue.200">
-            <Text fontSize="xs" color="blue.800">
-              🔬 <strong>Grease Analysis:</strong> Green areas indicate stable grease condition. 
-              Yellow shows moderate oxidation. Red zones highlight critical oxidation points requiring maintenance attention.
-              {abnormalityWeights && abnormalityWeights.length > 0 && 
-                " Colored background regions show applied weight ranges - higher weights amplify deviations in those spectral areas."
-              }
-              Hover over the heat bar to see specific wavenumber and deviation values.
-            </Text>
+          <Box w="100%" p={4} bg="blue.50" rounded="lg" borderWidth="2px" borderColor="blue.300">
+            <HStack spacing={2} mb={2}>
+              <Text fontSize="lg">💡</Text>
+              <Text fontSize="sm" fontWeight="bold" color="blue.900">
+                How to Read This Map
+              </Text>
+            </HStack>
+            <VStack align="start" spacing={1}>
+              <HStack spacing={2}>
+                <Box w="8px" h="8px" bg="rgb(0, 255, 0)" borderRadius="full" />
+                <Text fontSize="xs" color="blue.800">
+                  <strong>Green zones:</strong> Stable grease, minimal deviation from baseline
+                </Text>
+              </HStack>
+              <HStack spacing={2}>
+                <Box w="8px" h="8px" bg="rgb(255, 255, 0)" borderRadius="full" />
+                <Text fontSize="xs" color="blue.800">
+                  <strong>Yellow zones:</strong> Moderate changes, monitor for trending
+                </Text>
+              </HStack>
+              <HStack spacing={2}>
+                <Box w="8px" h="8px" bg="rgb(255, 0, 0)" borderRadius="full" />
+                <Text fontSize="xs" color="blue.800">
+                  <strong>Red zones:</strong> Critical oxidation/contamination detected
+                </Text>
+              </HStack>
+              <Text fontSize="xs" color="blue.700" mt={2} fontStyle="italic">
+                💡 Hover over any section to see exact wavenumber and deviation values
+              </Text>
+            </VStack>
           </Box>
         )}
       </VStack>

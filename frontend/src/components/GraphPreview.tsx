@@ -2,7 +2,6 @@ import React, { useRef, useMemo } from 'react';
 import { Box, VStack, Text, HStack, Button, Icon } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon, RepeatIcon } from '@chakra-ui/icons';
 import { ParsedCSV } from '../types';
-import GraphSummary from './GraphSummary';
 import DeviationHeatBar from './DeviationHeatBar';
 import { Line } from 'react-chartjs-2';
 import { Series, diff } from '../lib/series';
@@ -46,7 +45,7 @@ interface Props {
   sampleFiles?: FileList;
   abnormalityWeights?: RangeWeight[];
   onScoreUpdate?: (scores: { [filename: string]: number }) => void;
-  scoringMethod?: 'area' | 'rmse' | 'pearson';
+  scoringMethod?: 'area' | 'rmse' | 'hybrid' | 'pearson';
 }
 
 const GraphPreview: React.FC<Props> = ({ 
@@ -58,7 +57,7 @@ const GraphPreview: React.FC<Props> = ({
   sampleFiles,
   abnormalityWeights = [],
   onScoreUpdate,
-  scoringMethod = 'area'
+  scoringMethod = 'hybrid'
 }) => {
   const chartRef = useRef<any>(null);
   const differenceChartRef = useRef<any>(null);
@@ -152,8 +151,11 @@ const GraphPreview: React.FC<Props> = ({
         if (scoringMethod === 'rmse') {
           // For RMSE: use squared error (will be sqrt'd in visualization)
           baseDeviation = selectedSampleDiff.delta[idx] * selectedSampleDiff.delta[idx];
+        } else if (scoringMethod === 'hybrid') {
+          // For Hybrid: show absolute difference from baseline (deviation magnitude)
+          baseDeviation = Math.abs(selectedSampleDiff.delta[idx]);
         } else if (scoringMethod === 'pearson') {
-          // For Pearson: show absolute difference from baseline (deviation magnitude)
+          // For Pure Pearson: show absolute difference from baseline (deviation magnitude)
           baseDeviation = Math.abs(selectedSampleDiff.delta[idx]);
         } else if (scoringMethod === 'area') {
           // For Area: show absolute difference weighted by position
@@ -231,10 +233,26 @@ const GraphPreview: React.FC<Props> = ({
           score = Math.max(0, 40 * Math.exp(-(weightedRMSE - 0.5) / 0.3)); // 0-40 for poor
         }
 
-      } else if (scoringMethod === 'pearson') {
-        // Method 2: Pearson Correlation per Interval
-        // Calculate weighted Pearson correlation coefficient
+      } else if (scoringMethod === 'hybrid') {
+        // Method 2: Hybrid Score (Weighted RMSE + Pearson Penalty)
+        // SCIENTIFICALLY CORRECT APPROACH FOR FTIR GREASE ANALYSIS
+        
+        // Step 1: Calculate Weighted RMSE (primary metric for chemical changes)
+        let sumWeightedSquaredError = 0;
         let sumWeights = 0;
+
+        for (let i = 0; i < diffX.length; i++) {
+          const wavelength = diffX[i];
+          const deviation = delta[i];
+          const weight = getWeightForWavelength(wavelength);
+          
+          sumWeightedSquaredError += weight * (deviation * deviation);
+          sumWeights += weight;
+        }
+
+        const weightedRMSE = sumWeights > 0 ? Math.sqrt(sumWeightedSquaredError / sumWeights) : 0;
+        
+        // Step 2: Calculate Pearson correlation (shape mismatch penalty only)
         let sumWeightedX = 0;
         let sumWeightedY = 0;
         let sumWeightedXY = 0;
@@ -245,7 +263,6 @@ const GraphPreview: React.FC<Props> = ({
           const wavelength = diffX[i];
           const weight = getWeightForWavelength(wavelength);
           
-          // Find corresponding baseline and sample y-values
           const baselineIdx = baseline.x.indexOf(wavelength);
           const sampleIdx = sample.x.indexOf(wavelength);
           
@@ -253,7 +270,6 @@ const GraphPreview: React.FC<Props> = ({
             const baselineY = baseline.y[baselineIdx];
             const sampleY = sample.y[sampleIdx];
             
-            sumWeights += weight;
             sumWeightedX += weight * baselineY;
             sumWeightedY += weight * sampleY;
             sumWeightedXY += weight * baselineY * sampleY;
@@ -262,7 +278,7 @@ const GraphPreview: React.FC<Props> = ({
           }
         }
 
-        // Calculate weighted Pearson correlation
+        let correlation = 0;
         if (sumWeights > 0) {
           const meanX = sumWeightedX / sumWeights;
           const meanY = sumWeightedY / sumWeights;
@@ -274,30 +290,93 @@ const GraphPreview: React.FC<Props> = ({
           const stdX = Math.sqrt(Math.abs(meanX2 - (meanX * meanX)));
           const stdY = Math.sqrt(Math.abs(meanY2 - (meanY * meanY)));
           
-          let correlation = 0;
           if (stdX > 0 && stdY > 0) {
             correlation = covariance / (stdX * stdY);
-            // Clamp correlation to [-1, 1] to handle numerical errors
             correlation = Math.max(-1, Math.min(1, correlation));
           }
-          
-          // Convert correlation to score with meaningful thresholds
-          // Correlation > 0.98: excellent (90-100)
-          // Correlation 0.95-0.98: good (70-90)
-          // Correlation 0.90-0.95: fair (40-70)
-          // Correlation < 0.90: poor (0-40)
-          if (correlation >= 0.98) {
-            score = 90 + (10 * (correlation - 0.98) / 0.02);
-          } else if (correlation >= 0.95) {
-            score = 70 + (20 * (correlation - 0.95) / 0.03);
-          } else if (correlation >= 0.90) {
-            score = 40 + (30 * (correlation - 0.90) / 0.05);
-          } else {
-            score = Math.max(0, 40 * (correlation / 0.90));
-          }
-        } else {
-          score = 0;
         }
+
+        // Step 3: Calculate base score from RMSE (85% weight)
+        let baseScore = 0;
+        if (weightedRMSE <= 0.10) {
+          baseScore = 90 + (10 * (1 - weightedRMSE / 0.10));
+        } else if (weightedRMSE <= 0.25) {
+          baseScore = 70 + (20 * (1 - (weightedRMSE - 0.10) / 0.15));
+        } else if (weightedRMSE <= 0.5) {
+          baseScore = 40 + (30 * (1 - (weightedRMSE - 0.25) / 0.25));
+        } else {
+          baseScore = Math.max(0, 40 * Math.exp(-(weightedRMSE - 0.5) / 0.3));
+        }
+
+        // Step 4: Calculate Pearson penalty (15% weight, only penalizes shape mismatch)
+        // Correlation < 0.90 indicates structural/shape problems beyond just intensity
+        let pearsonPenalty = 0;
+        if (correlation < 0.90) {
+          // Maximum 15 point penalty for severe shape mismatch
+          pearsonPenalty = 15 * (0.90 - correlation) / 0.90;
+        } else if (correlation < 0.95) {
+          // Small penalty (0-7.5 points) for minor shape issues
+          pearsonPenalty = 7.5 * (0.95 - correlation) / 0.05;
+        }
+        // If correlation >= 0.95, no penalty (shape is good)
+
+        // Step 5: Combined score = RMSE-based score - Pearson penalty
+        score = Math.max(0, Math.min(100, baseScore - pearsonPenalty));
+
+      } else if (scoringMethod === 'pearson') {
+        // Method 3: Pure Pearson Correlation (for comparison/research purposes)
+        // WARNING: This method alone is NOT scientifically sound for FTIR grease oxidation analysis
+        // It only measures shape similarity, not chemical changes or oxidation severity
+        
+        let sumWeightedX = 0;
+        let sumWeightedY = 0;
+        let sumWeightedXY = 0;
+        let sumWeightedX2 = 0;
+        let sumWeightedY2 = 0;
+        let sumWeights = 0;
+
+        for (let i = 0; i < diffX.length; i++) {
+          const wavelength = diffX[i];
+          const weight = getWeightForWavelength(wavelength);
+          
+          const baselineIdx = baseline.x.indexOf(wavelength);
+          const sampleIdx = sample.x.indexOf(wavelength);
+          
+          if (baselineIdx !== -1 && sampleIdx !== -1) {
+            const baselineY = baseline.y[baselineIdx];
+            const sampleY = sample.y[sampleIdx];
+            
+            sumWeightedX += weight * baselineY;
+            sumWeightedY += weight * sampleY;
+            sumWeightedXY += weight * baselineY * sampleY;
+            sumWeightedX2 += weight * baselineY * baselineY;
+            sumWeightedY2 += weight * sampleY * sampleY;
+            sumWeights += weight;
+          }
+        }
+
+        let correlation = 0;
+        if (sumWeights > 0) {
+          const meanX = sumWeightedX / sumWeights;
+          const meanY = sumWeightedY / sumWeights;
+          const meanXY = sumWeightedXY / sumWeights;
+          const meanX2 = sumWeightedX2 / sumWeights;
+          const meanY2 = sumWeightedY2 / sumWeights;
+          
+          const covariance = meanXY - (meanX * meanY);
+          const stdX = Math.sqrt(Math.abs(meanX2 - (meanX * meanX)));
+          const stdY = Math.sqrt(Math.abs(meanY2 - (meanY * meanY)));
+          
+          if (stdX > 0 && stdY > 0) {
+            correlation = covariance / (stdX * stdY);
+            correlation = Math.max(-1, Math.min(1, correlation));
+          }
+        }
+
+        // Map correlation to score (0-100 scale)
+        // r = 1.0 → 100, r = 0.95 → 95, r = 0.9 → 90, etc.
+        // Note: This assumes higher correlation = better, which is problematic for detecting chemical changes
+        score = Math.max(0, Math.min(100, correlation * 100));
 
       } else if (scoringMethod === 'area') {
         // Method 3: Area Difference / Integral Difference (default)
@@ -695,15 +774,9 @@ const GraphPreview: React.FC<Props> = ({
             abnormalityWeights={abnormalityWeights}
           />
         )}
-        
-        {/* AI-Powered Graph Summary */}
-        <GraphSummary
-          baseline={baseline}
-          selectedSample={sample}
-          baselineFile={baselineFile}
-          selectedSampleFile={selectedSampleFile}
-        />
       </VStack>
     </Box>
   );
-};export default GraphPreview;
+};
+
+export default GraphPreview;
