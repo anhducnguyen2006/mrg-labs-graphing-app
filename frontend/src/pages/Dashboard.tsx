@@ -9,7 +9,8 @@ import {
   HStack,
   Text,
   Badge,
-  Flex
+  Flex,
+  ButtonGroup
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/FileUploadBox';
 import GraphPreview from '../components/GraphPreview';
@@ -31,6 +32,7 @@ const Dashboard: React.FC = () => {
   const [selectedSample, setSelectedSample] = useState<string | undefined>();
   const [abnormalityWeights, setAbnormalityWeights] = useState<RangeWeight[]>([]);
   const [sampleScores, setSampleScores] = useState<{ [filename: string]: number }>({});
+  const [scoringMethod, setScoringMethod] = useState<'area' | 'rmse' | 'pearson'>('area'); // Default to area difference
   const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
   const { isOpen: isChangePasswordOpen, onOpen: onChangePasswordOpen, onClose: onChangePasswordClose } = useDisclosure();
   const { isOpen: isWeightOpen, onOpen: onWeightOpen, onClose: onWeightClose } = useDisclosure();
@@ -165,42 +167,87 @@ const Dashboard: React.FC = () => {
             />
           </SimpleGrid>
 
-          {/* Selected Sample Info and Configure Button */}
-          <Flex justify="space-between" align="center" w="100%">
-            <HStack>
-              {selectedSample && sampleScores[selectedSample] !== undefined && (
-                <>
-                  <Text fontSize="md" fontWeight="medium" color="gray.700">
-                    Selected Sample:
-                  </Text>
-                  <Text fontSize="md" fontWeight="bold" color="blue.700" maxW="300px" noOfLines={1}>
-                    {selectedSample?.replace('.csv', '') || ''}
-                  </Text>
-                  <Badge
-                    colorScheme={
-                      sampleScores[selectedSample] >= 90 ? 'green' : 
-                      sampleScores[selectedSample] >= 70 ? 'yellow' : 'red'
-                    }
-                    size="md"
-                    fontSize="sm"
-                    fontWeight="bold"
-                    px={3}
-                    py={1}
+          {/* Scoring Method Selection and Configure Button */}
+          <VStack align="stretch" spacing={3} w="100%">
+            <Flex justify="space-between" align="center" w="100%">
+              <HStack spacing={4}>
+                <Text fontSize="md" fontWeight="semibold" color="gray.700">
+                  Scoring Method:
+                </Text>
+                <ButtonGroup size="sm" isAttached variant="outline">
+                  <Button
+                    onClick={() => setScoringMethod('rmse')}
+                    colorScheme={scoringMethod === 'rmse' ? 'blue' : 'gray'}
+                    bg={scoringMethod === 'rmse' ? 'blue.500' : 'white'}
+                    color={scoringMethod === 'rmse' ? 'white' : 'gray.700'}
+                    _hover={{
+                      bg: scoringMethod === 'rmse' ? 'blue.600' : 'gray.100'
+                    }}
+                    fontWeight={scoringMethod === 'rmse' ? 'bold' : 'normal'}
                   >
-                    Score: {Math.round(sampleScores[selectedSample])}
-                  </Badge>
-                </>
-              )}
-            </HStack>
-            <Button
-              colorScheme="purple"
-              variant="outline"
-              size="md"
-              onClick={onWeightOpen}
-            >
-              Configure Abnormality Weights
-            </Button>
-          </Flex>
+                    RMSE Deviation
+                  </Button>
+                  <Button
+                    onClick={() => setScoringMethod('pearson')}
+                    colorScheme={scoringMethod === 'pearson' ? 'blue' : 'gray'}
+                    bg={scoringMethod === 'pearson' ? 'blue.500' : 'white'}
+                    color={scoringMethod === 'pearson' ? 'white' : 'gray.700'}
+                    _hover={{
+                      bg: scoringMethod === 'pearson' ? 'blue.600' : 'gray.100'
+                    }}
+                    fontWeight={scoringMethod === 'pearson' ? 'bold' : 'normal'}
+                  >
+                    Pearson Correlation
+                  </Button>
+                  <Button
+                    onClick={() => setScoringMethod('area')}
+                    colorScheme={scoringMethod === 'area' ? 'blue' : 'gray'}
+                    bg={scoringMethod === 'area' ? 'blue.500' : 'white'}
+                    color={scoringMethod === 'area' ? 'white' : 'gray.700'}
+                    _hover={{
+                      bg: scoringMethod === 'area' ? 'blue.600' : 'gray.100'
+                    }}
+                    fontWeight={scoringMethod === 'area' ? 'bold' : 'normal'}
+                  >
+                    Area Difference
+                  </Button>
+                </ButtonGroup>
+              </HStack>
+              <Button
+                colorScheme="purple"
+                variant="outline"
+                size="md"
+                onClick={onWeightOpen}
+              >
+                Configure Abnormality Weights
+              </Button>
+            </Flex>
+
+            {/* Selected Sample Info */}
+            {selectedSample && sampleScores[selectedSample] !== undefined && (
+              <HStack>
+                <Text fontSize="md" fontWeight="medium" color="gray.700">
+                  Selected Sample:
+                </Text>
+                <Text fontSize="md" fontWeight="bold" color="blue.700" maxW="300px" noOfLines={1}>
+                  {selectedSample?.replace('.csv', '') || ''}
+                </Text>
+                <Badge
+                  colorScheme={
+                    sampleScores[selectedSample] >= 90 ? 'green' : 
+                    sampleScores[selectedSample] >= 70 ? 'yellow' : 'red'
+                  }
+                  size="md"
+                  fontSize="sm"
+                  fontWeight="bold"
+                  px={3}
+                  py={1}
+                >
+                  Score: {Math.round(sampleScores[selectedSample])}
+                </Badge>
+              </HStack>
+            )}
+          </VStack>
 
           <GraphPreview
             baseline={baselineParsed}
@@ -211,6 +258,7 @@ const Dashboard: React.FC = () => {
             sampleFiles={sampleFiles}
             abnormalityWeights={abnormalityWeights}
             onScoreUpdate={setSampleScores}
+            scoringMethod={scoringMethod}
           />
         </VStack>
       </Box>
