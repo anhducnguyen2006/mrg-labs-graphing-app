@@ -2,11 +2,11 @@ export { default as TopBar } from './TopBar';
 export { default as StatusPills } from './StatusPills';
 export { default as SampleSidebar } from './SampleSidebar';
 export { default as ScoreCard } from './ScoreCard';
-export { default as FTIRGraph } from './FTIRGraph_fixed';
+export { default as FTIRGraph } from './FTIRGraph';
 export { default as DeviationHeatmap } from './DeviationHeatmap';
 export { default as ExportModal } from './ExportModal';
 export { default as WeightConfigModal } from './WeightConfigModal';
-export { default as RedesignedDashboard } from './RedesignedDashboard_fixed';
+export { default as RedesignedDashboard } from './RedesignedDashboard';
 
 // Re-export types for easier importing
 export type {
@@ -17,7 +17,7 @@ export type {
   DeviationHeatmapProps,
   ExportModalProps,
   WeightConfigModalProps,
-} from './types_fixed';
+} from './types';
 
 // Constants
 export const DESIGN_TOKENS = {

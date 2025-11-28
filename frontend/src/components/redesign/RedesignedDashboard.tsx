@@ -1,15 +1,15 @@
 // Fixed RedesignedDashboard with proper dependency management
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import TopBar from './TopBar';
 import StatusPills from './StatusPills';
 import SampleSidebar from './SampleSidebar';
 import ScoreCard from './ScoreCard';
-import FTIRGraph from './FTIRGraph_fixed';
+import FTIRGraph from './FTIRGraph';
 import DeviationHeatmap from './DeviationHeatmap';
 import ExportModal from './ExportModal';
 import WeightConfigModal from './WeightConfigModal';
 import FileUploadBox from '../FileUploadBox';
-import { FTIRAnalysisService } from '../../services/ftirAnalysis_fixed';
+import { FTIRAnalysisService } from '../../services/ftirAnalysis';
 import { 
   User, 
   Sample, 
