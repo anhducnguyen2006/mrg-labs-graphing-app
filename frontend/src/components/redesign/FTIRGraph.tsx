@@ -14,7 +14,7 @@ import {
   TooltipItem,
 } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
-import { Sample, ParsedCSV, getSampleStatus } from './types_fixed';
+import { Sample, ParsedCSV, getSampleStatus } from '../../types';
 
 // Register Chart.js components
 ChartJS.register(

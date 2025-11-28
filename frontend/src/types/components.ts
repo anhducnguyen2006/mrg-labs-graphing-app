@@ -1,51 +1,6 @@
-// Fixed types.ts - Centralized and consistent interfaces
+// Component prop types for redesigned dashboard components
+import type { Sample, ParsedCSV, RangeWeight, ScoringMethod, StatusFilter, Status } from './common';
 
-export interface User {
-  name: string;
-  email: string;
-  avatarUrl?: string;
-}
-
-// Unified Sample interface used across all components
-export interface Sample {
-  filename: string;
-  name?: string;
-  score?: number;
-  starred?: boolean;
-  isFavorite?: boolean; // Legacy compatibility
-  x: number[];
-  y: number[];
-  rawContent: string;
-}
-
-export interface ParsedCSV {
-  filename: string;
-  x: number[];
-  y: number[];
-  rawContent: string;
-}
-
-export interface RangeWeight {
-  min: number;
-  max: number;
-  weight: number;
-  label: string;
-  key: string;
-}
-
-export type ScoringMethod = 'hybrid' | 'rmse' | 'pearson' | 'area';
-export type StatusFilter = 'all' | 'good' | 'warning' | 'critical';
-export type Status = 'good' | 'warning' | 'critical';
-
-// Utility function to get sample status - centralized
-export const getSampleStatus = (score: number | undefined): Status => {
-  if (score === undefined) return 'good';
-  if (score >= 90) return 'good';
-  if (score >= 70) return 'warning';
-  return 'critical';
-};
-
-// Component prop types with strict typing
 export interface StatusPillsProps {
   good: number;
   warning: number;
@@ -109,7 +64,7 @@ export interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   samples: Sample[];
-  onExport: (config: ExportConfig) => Promise<void>; // Make async
+  onExport: (config: ExportConfig) => Promise<void>;
 }
 
 export interface WeightConfigModalProps {
@@ -118,18 +73,3 @@ export interface WeightConfigModalProps {
   onSave: (weights: RangeWeight[]) => void;
   initialWeights?: RangeWeight[];
 }
-
-// Error handling types
-export interface AnalysisError {
-  code: 'INVALID_DATA' | 'CALCULATION_ERROR' | 'MISSING_BASELINE';
-  message: string;
-  details?: Record<string, unknown>;
-}
-
-export type AnalysisResult<T> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  error: AnalysisError;
-};

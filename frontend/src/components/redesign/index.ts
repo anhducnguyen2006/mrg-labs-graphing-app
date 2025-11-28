@@ -17,7 +17,7 @@ export type {
   DeviationHeatmapProps,
   ExportModalProps,
   WeightConfigModalProps,
-} from './types';
+} from '../../types/components';
 
 // Constants
 export const DESIGN_TOKENS = {
