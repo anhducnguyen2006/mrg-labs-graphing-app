@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { customRender } from '../../../test/utils';
-import FTIRGraph from '../FTIRGraph';
+import FTIRGraph from '../FTIRGraph_fixed';
 
 describe('FTIRGraph Component', () => {
   const defaultProps = {
