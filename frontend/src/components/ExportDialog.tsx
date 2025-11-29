@@ -21,10 +21,14 @@ import {
   InputGroup,
   InputLeftElement,
   Box,
-  useToast
+  useToast,
+  Tooltip,
+  Icon
 } from '@chakra-ui/react';
-import { SearchIcon } from '@chakra-ui/icons';
+import { SearchIcon, DownloadIcon } from '@chakra-ui/icons';
+import { FaFolderOpen } from 'react-icons/fa';
 import { ParsedCSV } from '../types';
+import { checkFolderAccessSupported, exportBlob } from '../utils/fileSystemAccess';
 
 interface Props {
   isOpen: boolean;
@@ -52,7 +56,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
     setSelectedSamples([]);
   };
 
-  const handleExport = async () => {
+  const handleExport = async (useFolderPicker: boolean = false) => {
     if (!baseline) {
       toast({
         title: 'Error',
@@ -106,24 +110,38 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
       }
 
       const blob = await response.blob();
+      const filename = `exported_graphs_${format}.zip`;
       
-      // Simple browser download to Downloads folder
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `exported_graphs_${format}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Use folder picker if requested and supported, otherwise fallback
+      const result = await exportBlob(blob, filename, useFolderPicker);
       
-      toast({
-        title: 'Export Complete',
-          description: `Successfully downloaded ${selectedSamples.length} graph(s) as ${format.toUpperCase()} ZIP file`,
-          status: 'success',
-          duration: 5000,
+      if (result.success) {
+        if (result.method === 'folder') {
+          toast({
+            title: 'Exported to folder successfully!',
+            description: `${filename} saved to selected folder`,
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+          });
+        } else {
+          toast({
+            title: 'Export Complete',
+            description: `Downloaded ${selectedSamples.length} graph(s) as ${format.toUpperCase()} ZIP file`,
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+          });
+        }
+      } else {
+        toast({
+          title: 'Export Cancelled',
+          description: 'Folder selection was cancelled',
+          status: 'info',
+          duration: 3000,
           isClosable: true,
         });
+      }
 
       onClose();
     } catch (error) {
@@ -167,7 +185,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
             {/* Download Info */}
             <Box w="100%" p={3} bg="blue.50" borderRadius="md">
               <Text fontSize="sm" color="blue.700">
-                💡 <strong>Download Location:</strong> Files will be saved as a ZIP to your browser's default download location (usually Downloads folder).
+                💡 <strong>Export Options:</strong> Use "Export Graphs" to choose a custom folder (Chromium browsers only), or use standard "Export" for default Downloads folder.
               </Text>
             </Box>
 
@@ -226,9 +244,29 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
           <Button variant="ghost" mr={3} onClick={onClose}>
             Cancel
           </Button>
+          <Tooltip 
+            label={checkFolderAccessSupported() 
+              ? "Choose a folder to save the ZIP file" 
+              : "Folder picker not supported in this browser. Use Chrome, Edge, or Opera."
+            }
+            placement="top"
+          >
+            <Button 
+              colorScheme="green"
+              leftIcon={<Icon as={FaFolderOpen} />}
+              onClick={() => handleExport(true)}
+              isLoading={isExporting}
+              loadingText="Exporting..."
+              mr={3}
+              isDisabled={!checkFolderAccessSupported()}
+            >
+              Export Graphs
+            </Button>
+          </Tooltip>
           <Button 
-            colorScheme="blue" 
-            onClick={handleExport}
+            colorScheme="blue"
+            leftIcon={<DownloadIcon />}
+            onClick={() => handleExport(false)}
             isLoading={isExporting}
             loadingText="Exporting..."
           >

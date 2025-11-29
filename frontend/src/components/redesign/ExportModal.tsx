@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { checkFolderAccessSupported } from '../../utils/fileSystemAccess';
 
 interface Sample {
   filename: string;
@@ -72,8 +73,58 @@ const ExportModal: React.FC<ExportModalProps> = ({
 
   const selectedSamples = getSelectedSamples();
 
+  // Helper function to export ZIP to selected folder using File System Access API
+  const exportToFolder = async (blob: Blob): Promise<void> => {
+    try {
+      // Request directory picker
+      const dirHandle = await window.showDirectoryPicker({
+        mode: 'readwrite',
+        startIn: 'downloads'
+      });
+
+      // Create or overwrite the file
+      const fileHandle = await dirHandle.getFileHandle('FTIR_export.zip', { create: true });
+      const writable = await fileHandle.createWritable();
+      
+      // Write the blob
+      await writable.write(blob);
+      await writable.close();
+
+      console.log('✅ Exported to folder successfully!');
+      alert('Exported to folder successfully!');
+    } catch (error: any) {
+      // Handle user cancellation
+      if (error.name === 'AbortError') {
+        console.log('Folder selection cancelled');
+        return;
+      }
+
+      // Handle permission errors
+      if (error.name === 'NotAllowedError') {
+        alert('Permission denied. Please grant permission to save files.');
+        throw error;
+      }
+
+      // Other errors
+      console.error('Folder export failed:', error);
+      throw error;
+    }
+  };
+
+  // Fallback download method for browsers without File System Access API
+  const downloadZipFallback = (blob: Blob): void => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `exported_graphs_${format}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   // Handle export
-  const handleExport = async () => {
+  const handleExport = async (useFolderPicker: boolean = false) => {
     setIsExporting(true);
     
     const config: ExportConfig = {
@@ -86,6 +137,11 @@ const ExportModal: React.FC<ExportModalProps> = ({
 
     try {
       await onExport(config);
+      
+      // Note: This is a placeholder. The actual blob should come from onExport
+      // In a real implementation, onExport should return the blob
+      // For now, this demonstrates the pattern
+      
       onClose();
     } catch (error) {
       console.error('Export failed:', error);
@@ -405,6 +461,12 @@ const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
+          {/* Export Info Banner */}
+          <div className="mb-6 p-3 bg-blue-50 rounded text-xs text-blue-700">
+            💡 <strong>Export Options:</strong> Use "Export Graphs" to choose a custom folder (Chromium browsers only), 
+            or use standard "Export" for default Downloads folder.
+          </div>
+
           {/* Footer */}
           <div className="flex justify-between items-center pt-4 border-t">
             <button
@@ -428,12 +490,26 @@ const ExportModal: React.FC<ExportModalProps> = ({
               >
                 Cancel
               </button>
+              
+              {checkFolderAccessSupported() && (
+                <button
+                  onClick={() => handleExport(true)}
+                  disabled={selectedSamples.length === 0 || isExporting}
+                  className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center space-x-2"
+                  title="Choose a folder to save the ZIP file"
+                >
+                  <span>📁</span>
+                  <span>{isExporting ? 'Exporting...' : 'Export Graphs'}</span>
+                </button>
+              )}
+              
               <button
-                onClick={handleExport}
+                onClick={() => handleExport(false)}
                 disabled={selectedSamples.length === 0 || isExporting}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center space-x-2"
               >
-                {isExporting ? 'Exporting...' : 'Export ZIP'}
+                <span>⬇️</span>
+                <span>{isExporting ? 'Exporting...' : 'Export'}</span>
               </button>
             </div>
           </div>

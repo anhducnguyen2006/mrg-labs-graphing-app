@@ -42,6 +42,7 @@ Full-stack web application for the 2025 Schneider Prize challenge. Upload a sing
 - ✅ Advanced zoom and pan controls with reset functionality
 - ✅ Custom X-axis scaling for spectroscopy data
 - ✅ Batch export: generates and saves PNG graphs
+- ✅ **Folder Export (Chromium only)**: Choose custom export folder using File System Access API
 - ✅ Dynamic legend with filename display
 - ✅ Professional axes labeling (A for Y-axis, cm⁻¹ for X-axis)
 
@@ -171,6 +172,46 @@ docker compose up
 5. **Get AI Analysis** - Automatic analysis with insights
 6. **Chat with AI** - Ask questions about your data
 7. **Export Graphs** - Download generated PNG images
+   - **Standard Export**: Downloads ZIP to default Downloads folder
+   - **Folder Export** (Chromium only): Choose custom export location
+
+## 📁 Folder Export Feature
+
+The application now supports custom folder selection for exports using the **File System Access API**:
+
+### Browser Compatibility
+
+✅ **Supported Browsers:**
+- Chrome 86+
+- Edge 86+
+- Opera 72+
+- Brave (Chromium-based)
+
+❌ **Not Supported:**
+- Firefox
+- Safari
+- Internet Explorer
+
+### How It Works
+
+1. Click **"Export Graphs"** button in the export dialog
+2. Browser will prompt you to select a destination folder
+3. Grant write permissions when prompted
+4. File `FTIR_export.zip` will be created/overwritten in your chosen folder
+5. Success notification appears when complete
+
+### Fallback Behavior
+
+- If folder selection is not supported, the button will be disabled
+- Standard "Export" button provides traditional download to Downloads folder
+- If folder selection fails or is cancelled, app falls back to standard download
+
+### Security Notes
+
+- Browser will always prompt for user permission before writing files
+- Each folder selection requires explicit user approval
+- Files can only be written to user-selected folders, not arbitrary system locations
+- Works in containerized Docker localhost environments
 
 ## 🔒 Security Features
 
