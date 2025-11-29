@@ -3,9 +3,9 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Login from './components/auth/Login';
+import Signup from './components/auth/Signup';
 import Dashboard from './pages/Dashboard';
 
 const App: React.FC = () => {
