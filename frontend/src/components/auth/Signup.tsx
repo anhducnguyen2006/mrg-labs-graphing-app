@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon, CheckIcon } from '@chakra-ui/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Signup: React.FC = () => {
     const [username, setUsername] = useState('');

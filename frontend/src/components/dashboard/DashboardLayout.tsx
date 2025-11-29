@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
-import { User } from '../services/auth';
+import { User } from '../../services/auth';
 
 interface DashboardLayoutProps {
     sidebar: React.ReactNode;

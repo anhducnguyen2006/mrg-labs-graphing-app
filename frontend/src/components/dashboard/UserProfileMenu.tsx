@@ -14,7 +14,7 @@ import {
     Icon,
 } from '@chakra-ui/react';
 import { FaUserCircle } from 'react-icons/fa';
-import { User } from '../services/auth';
+import { User } from '../../services/auth';
 import UserBackground from './UserBackground';
 
 interface UserProfileMenuProps {

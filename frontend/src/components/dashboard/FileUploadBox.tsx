@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import Papa, { ParseResult } from 'papaparse';
 import { Box, Text, Input, VStack, HStack, Tag, Button, IconButton, Collapse, useDisclosure } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import { ParsedCSV } from '../types';
+import { ParsedCSV } from '../../types';
 
 interface Props {
   label: string;

@@ -23,7 +23,7 @@ import {
     Progress,
 } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
-import { changePassword } from '../services/auth';
+import { changePassword } from '../../services/auth';
 
 interface ChangePasswordDialogProps {
     isOpen: boolean;

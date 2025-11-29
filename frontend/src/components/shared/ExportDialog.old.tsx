@@ -27,8 +27,8 @@ import {
 } from '@chakra-ui/react';
 import { SearchIcon, DownloadIcon } from '@chakra-ui/icons';
 import { FaFolderOpen } from 'react-icons/fa';
-import { ParsedCSV } from '../types';
-import { checkFolderAccessSupported, exportBlob } from '../utils/fileSystemAccess';
+import { ParsedCSV } from '../../types';
+import { checkFolderAccessSupported, exportBlob } from '../../utils/fileSystemAccess';
 
 interface Props {
   isOpen: boolean;

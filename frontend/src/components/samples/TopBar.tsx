@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import StatusPills from './StatusPills';
-import UserProfileMenu from '../UserProfileMenu';
+import StatusPills from '../ftir/StatusPills';
+import UserProfileMenu from '../dashboard/UserProfileMenu';
 
 interface User {
   name: string;

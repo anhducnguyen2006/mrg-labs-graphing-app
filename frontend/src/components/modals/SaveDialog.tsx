@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Box, VStack, Text, List, ListItem, Spinner, HStack, Input } from '@chakra-ui/react';
 import axios from 'axios';
-import { SavedGraphResponse } from '../types';
+import { SavedGraphResponse } from '../../types';
 
 interface Props {
   baseline?: File;

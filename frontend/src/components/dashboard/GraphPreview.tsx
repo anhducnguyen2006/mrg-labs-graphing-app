@@ -1,10 +1,10 @@
 import React, { useRef, useMemo } from 'react';
 import { Box, VStack, Text, HStack, Button, Icon } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon, RepeatIcon } from '@chakra-ui/icons';
-import { ParsedCSV } from '../types';
-import DeviationHeatBar from './DeviationHeatBar';
+import { ParsedCSV } from '../../types';
+import DeviationHeatBar from '../shared/DeviationHeatBar';
 import { Line } from 'react-chartjs-2';
-import { Series, diff } from '../lib/series';
+import { Series, diff } from '../../lib/series';
 import {
   Chart as ChartJS,
   CategoryScale,

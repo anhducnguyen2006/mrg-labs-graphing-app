@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Button, HStack, Heading, useColorModeValue } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import UserProfileMenu from './UserProfileMenu';
-import { User } from '../services/auth';
+import { User } from '../../services/auth';
 
 interface NavbarProps {
     isSidebarOpen: boolean;

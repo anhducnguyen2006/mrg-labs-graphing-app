@@ -12,14 +12,14 @@ import {
   Flex,
   ButtonGroup
 } from '@chakra-ui/react';
-import FileUploadBox from '../components/FileUploadBox';
-import GraphPreview from '../components/GraphPreview';
-import SampleSidebar from '../components/SampleSidebar';
-import ExportDialog from '../components/ExportDialog';
-import DashboardLayout from '../components/DashboardLayout';
-import ChangePasswordDialog from '../components/ChangePasswordDialog';
-import AbnormalityWeightDialog from '../components/AbnormalityWeightDialog';
-import type { RangeWeight } from '../components/AbnormalityWeightDialog';
+import FileUploadBox from '../components/dashboard/FileUploadBox';
+import GraphPreview from '../components/dashboard/GraphPreview';
+import SampleSidebar from '../components/shared/SampleSidebar.old';
+import ExportDialog from '../components/shared/ExportDialog.old';
+import DashboardLayout from '../components/dashboard/DashboardLayout';
+import ChangePasswordDialog from '../components/auth/ChangePasswordDialog';
+import AbnormalityWeightDialog from '../components/dashboard/AbnormalityWeightDialog';
+import type { RangeWeight } from '../components/dashboard/AbnormalityWeightDialog';
 import { ParsedCSV, User } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 

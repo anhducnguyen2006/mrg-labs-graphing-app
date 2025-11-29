@@ -24,8 +24,8 @@ import {
 import { SearchIcon, SmallCloseIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { FiHeart, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import { FaHeart, FaSortAlphaDown, FaSortAlphaUp, FaHeart as FaHeartFilled, FaSortNumericDown, FaSortNumericUp } from 'react-icons/fa';
-import { ParsedCSV } from '../types';
-import CriticalSamplesAlert from './CriticalSamplesAlert';
+import { ParsedCSV } from '../../types';
+import CriticalSamplesAlert from '../samples/CriticalSamplesAlert';
 
 interface Props {
   samples: ParsedCSV[];

@@ -1,14 +1,14 @@
 // Fixed RedesignedDashboard with proper dependency management
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import TopBar from './TopBar';
-import StatusPills from './StatusPills';
-import SampleSidebar from './SampleSidebar';
-import ScoreCard from './ScoreCard';
-import FTIRGraph from './FTIRGraph';
-import DeviationHeatmap from './DeviationHeatmap';
-import ExportModal from './ExportModal';
-import WeightConfigModal from './WeightConfigModal';
-import FileUploadBox from '../FileUploadBox';
+import TopBar from '../samples/TopBar';
+import StatusPills from '../ftir/StatusPills';
+import SampleSidebar from '../samples/SampleSidebar';
+import ScoreCard from '../ftir/ScoreCard';
+import FTIRGraph from '../ftir/FTIRGraph';
+import DeviationHeatmap from '../ftir/DeviationHeatmap';
+import ExportModal from '../modals/ExportModal';
+import WeightConfigModal from '../modals/WeightConfigModal';
+import FileUploadBox from './FileUploadBox';
 import { FTIRAnalysisService } from '../../services/ftirAnalysis';
 import { 
   User, 
@@ -18,7 +18,7 @@ import {
   ScoringMethod, 
   StatusFilter,
   getSampleStatus 
-} from './types_fixed';
+} from '../../types';
 
 interface RedesignedDashboardProps {
   // Props that would come from parent component
