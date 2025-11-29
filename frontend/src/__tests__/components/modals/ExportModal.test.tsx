@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { customRender } from '../../../test/utils';
-import ExportModal from '../ExportModal';
+import ExportModal from '../../../components/modals/ExportModal';
 
 describe('ExportModal Component', () => {
   const mockSamples = [

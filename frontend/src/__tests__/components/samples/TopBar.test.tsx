@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { customRender, mockUser } from '../../../test/utils';
-import TopBar from '../TopBar';
+import TopBar from '../../../components/samples/TopBar';
 
 describe('TopBar Component', () => {
   const defaultProps = {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { customRender } from '../../../test/utils';
-import WeightConfigModal from '../WeightConfigModal';
+import WeightConfigModal from '../../../components/modals/WeightConfigModal';
 
 describe('WeightConfigModal Component', () => {
   const mockInitialWeights = [

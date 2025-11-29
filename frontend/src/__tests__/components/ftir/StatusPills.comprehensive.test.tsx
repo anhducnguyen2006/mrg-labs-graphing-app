@@ -1,7 +1,7 @@
 // StatusPills comprehensive test suite
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import StatusPills from '../StatusPills';
+import StatusPills from '../../../components/ftir/StatusPills';
 
 describe('StatusPills', () => {
   const defaultProps = {

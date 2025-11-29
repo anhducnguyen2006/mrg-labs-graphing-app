@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { customRender } from '../../../test/utils';
-import RedesignedDashboard from '../RedesignedDashboard';
+import RedesignedDashboard from '../../../components/dashboard/RedesignedDashboard';
 
 describe('RedesignedDashboard Integration Tests', () => {
   const mockSamples = [

@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SampleSidebar from '../SampleSidebar';
+import SampleSidebar from '../../../components/samples/SampleSidebar';
 import { createMockSample } from '../../../test/vitest-setup';
 
 describe('SampleSidebar', () => {

@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import FTIRGraph from '../FTIRGraph_fixed';
+import FTIRGraph from '../../../components/ftir/FTIRGraph';
 import { createMockSample, createMockBaseline } from '../../../test/vitest-setup';
 
 // Mock Chart.js
