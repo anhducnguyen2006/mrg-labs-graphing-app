@@ -15,7 +15,8 @@ import {
   Divider,
   Avatar,
   useToast,
-  Tooltip
+  Tooltip,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon, ChatIcon } from '@chakra-ui/icons';
 
@@ -170,6 +171,16 @@ This data appears to be spectroscopy or similar scientific measurement data base
     }
   };
 
+  const bgChat = useColorModeValue('white', 'gray.800');
+  const bgMessages = useColorModeValue('gray.50', 'gray.900');
+  const bgMessage = useColorModeValue('white', 'gray.800');
+  const bgUserMessage = useColorModeValue('blue.500', 'blue.600');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const textMuted = useColorModeValue('gray.500', 'gray.400');
+  const inputBg = useColorModeValue('white', 'gray.700');
+  const suggestionBg = useColorModeValue('blue.50', 'blue.900');
+  const suggestionHover = useColorModeValue('blue.100', 'blue.800');
+
   return (
     <Box
       position="fixed"
@@ -177,9 +188,9 @@ This data appears to be spectroscopy or similar scientific measurement data base
       top={0}
       h="100vh"
       zIndex={1000}
-      bg="white"
+      bg={bgChat}
       borderLeft="1px solid"
-      borderColor="gray.200"
+      borderColor={borderColor}
       boxShadow="lg"
     >
       {/* Toggle Button */}
@@ -208,10 +219,10 @@ This data appears to be spectroscopy or similar scientific measurement data base
           {/* Header */}
           <Box
             p={4}
-            bg="blue.500"
+            bg={useColorModeValue('blue.500', 'blue.600')}
             color="white"
             borderBottom="1px solid"
-            borderColor="blue.600"
+            borderColor={useColorModeValue('blue.600', 'blue.700')}
           >
             <HStack justify="space-between" align="center">
               <HStack>
@@ -228,7 +239,7 @@ This data appears to be spectroscopy or similar scientific measurement data base
                     variant="ghost"
                     color="white"
                     onClick={clearConversation}
-                    _hover={{ bg: 'blue.600' }}
+                    _hover={{ bg: useColorModeValue('blue.600', 'blue.700') }}
                   >
                     Clear
                   </Button>
@@ -242,19 +253,19 @@ This data appears to be spectroscopy or similar scientific measurement data base
             flex={1}
             overflowY="auto"
             p={4}
-            bg="gray.50"
+            bg={bgMessages}
           >
             <VStack spacing={4} align="stretch">
               {messages.length === 0 && (
                 <Box
                   p={4}
-                  bg="white"
+                  bg={bgMessage}
                   borderRadius="md"
                   border="1px solid"
-                  borderColor="gray.200"
+                  borderColor={borderColor}
                   textAlign="center"
                 >
-                  <Text color="gray.500" fontSize="sm">
+                  <Text color={textMuted} fontSize="sm">
                     👋 Hi! I'm your AI assistant for data analysis.
                     Ask me anything about your graphs, statistics, or data interpretation!
                   </Text>
@@ -268,17 +279,17 @@ This data appears to be spectroscopy or similar scientific measurement data base
                   justify={message.role === 'user' ? 'flex-end' : 'flex-start'}
                 >
                   {message.role === 'assistant' && (
-                    <Avatar size="sm" bg="blue.500" color="white" name="AI" />
+                    <Avatar size="sm" bg={useColorModeValue('blue.500', 'blue.600')} color="white" name="AI" />
                   )}
                   
                   <Box
                     maxW="80%"
                     p={3}
                     borderRadius="lg"
-                    bg={message.role === 'user' ? 'blue.500' : 'white'}
-                    color={message.role === 'user' ? 'white' : 'black'}
+                    bg={message.role === 'user' ? bgUserMessage : bgMessage}
+                    color={message.role === 'user' ? 'white' : useColorModeValue('black', 'white')}
                     border={message.role === 'assistant' ? '1px solid' : 'none'}
-                    borderColor="gray.200"
+                    borderColor={borderColor}
                     boxShadow="sm"
                   >
                     <Text fontSize="sm" whiteSpace="pre-wrap">
@@ -287,7 +298,7 @@ This data appears to be spectroscopy or similar scientific measurement data base
                     {message.timestamp && (
                       <Text
                         fontSize="xs"
-                        color={message.role === 'user' ? 'blue.100' : 'gray.500'}
+                        color={message.role === 'user' ? useColorModeValue('blue.100', 'blue.200') : textMuted}
                         mt={1}
                       >
                         {new Date(message.timestamp).toLocaleTimeString()}
@@ -296,24 +307,24 @@ This data appears to be spectroscopy or similar scientific measurement data base
                   </Box>
 
                   {message.role === 'user' && (
-                    <Avatar size="sm" bg="gray.500" color="white" name="You" />
+                    <Avatar size="sm" bg={useColorModeValue('gray.500', 'gray.600')} color="white" name="You" />
                   )}
                 </HStack>
               ))}
 
               {isLoading && (
                 <HStack align="start">
-                  <Avatar size="sm" bg="blue.500" color="white" name="AI" />
+                  <Avatar size="sm" bg={useColorModeValue('blue.500', 'blue.600')} color="white" name="AI" />
                   <Box
                     p={3}
                     borderRadius="lg"
-                    bg="white"
+                    bg={bgMessage}
                     border="1px solid"
-                    borderColor="gray.200"
+                    borderColor={borderColor}
                   >
                     <HStack>
                       <Spinner size="sm" />
-                      <Text fontSize="sm" color="gray.500">
+                      <Text fontSize="sm" color={textMuted}>
                         AI is typing...
                       </Text>
                     </HStack>
@@ -329,36 +340,36 @@ This data appears to be spectroscopy or similar scientific measurement data base
           <Box
             p={4}
             borderTop="1px solid"
-            borderColor="gray.200"
-            bg="white"
+            borderColor={borderColor}
+            bg={inputBg}
           >
             <VStack spacing={3}>
               {(graphData || graphContext) && (
                 <Box
                   p={3}
-                  bg="blue.50"
+                  bg={suggestionBg}
                   borderRadius="md"
                   border="1px solid"
-                  borderColor="blue.200"
+                  borderColor={useColorModeValue('blue.200', 'blue.700')}
                   w="100%"
                 >
-                  <Text fontSize="xs" color="blue.600" fontWeight="medium" mb={1}>
+                  <Text fontSize="xs" color={useColorModeValue('blue.600', 'blue.300')} fontWeight="medium" mb={1}>
                     📊 Current Graph Context:
                   </Text>
                   {graphData && graphData.baseline && graphData.selectedSample ? (
                     <VStack spacing={1} align="stretch">
-                      <Text fontSize="xs" color="blue.700">
+                      <Text fontSize="xs" color={useColorModeValue('blue.700', 'blue.200')}>
                         <strong>Baseline:</strong> {graphData.baseline.filename}
                       </Text>
-                      <Text fontSize="xs" color="blue.700">
+                      <Text fontSize="xs" color={useColorModeValue('blue.700', 'blue.200')}>
                         <strong>Sample:</strong> {graphData.selectedSample.filename}
                       </Text>
-                      <Text fontSize="xs" color="blue.600">
+                      <Text fontSize="xs" color={useColorModeValue('blue.600', 'blue.300')}>
                         💡 I can analyze patterns, compare values, and answer questions about this data
                       </Text>
                     </VStack>
                   ) : (
-                    <Text fontSize="xs" color="blue.600">
+                    <Text fontSize="xs" color={useColorModeValue('blue.600', 'blue.300')}>
                       {graphContext || "Upload data to enable detailed analysis"}
                     </Text>
                   )}
@@ -374,9 +385,9 @@ This data appears to be spectroscopy or similar scientific measurement data base
                   size="sm"
                   resize="none"
                   rows={1}
-                  bg="white"
+                  bg={inputBg}
                   border="1px solid"
-                  borderColor="gray.300"
+                  borderColor={useColorModeValue('gray.300', 'gray.600')}
                   _focus={{
                     borderColor: 'blue.500',
                     boxShadow: '0 0 0 1px blue.500'
@@ -394,7 +405,7 @@ This data appears to be spectroscopy or similar scientific measurement data base
                 </Button>
               </HStack>
               
-              <Text fontSize="xs" color="gray.400" textAlign="center">
+              <Text fontSize="xs" color={useColorModeValue('gray.400', 'gray.500')} textAlign="center">
                 Press Enter to send, Shift+Enter for new line
               </Text>
             </VStack>

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Box, VStack, Text, HStack, Button, Badge } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, Button, Badge, useColorModeValue } from '@chakra-ui/react';
 
 interface RangeWeight {
   min: number;
@@ -135,16 +135,16 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
               left="50%"
               width="1px"
               height="80px"
-              bg="gray.400"
+              bg={useColorModeValue('gray.400', 'gray.600')}
               opacity={0.3}
             />
             {/* Label */}
             <Text
               fontSize="xs"
               fontWeight="medium"
-              color="gray.700"
+              color={useColorModeValue('gray.700', 'gray.300')}
               whiteSpace="nowrap"
-              bg="white"
+              bg={bgCard}
               px={1}
               borderRadius="sm"
             >
@@ -230,28 +230,39 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
     }).filter(Boolean);
   };
 
+  const bgCard = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.300', 'gray.600');
+  const textPrimary = useColorModeValue('gray.800', 'gray.100');
+  const textSecondary = useColorModeValue('gray.600', 'gray.400');
+  const legendGreenBg = useColorModeValue('green.100', 'green.900');
+  const legendGreenText = useColorModeValue('green.800', 'green.200');
+  const legendYellowBg = useColorModeValue('yellow.100', 'yellow.900');
+  const legendYellowText = useColorModeValue('yellow.800', 'yellow.200');
+  const legendRedBg = useColorModeValue('red.100', 'red.900');
+  const legendRedText = useColorModeValue('red.800', 'red.200');
+
   return (
-    <Box w="100%" bg="white" p={4} borderWidth="1px" rounded="md" shadow="sm">
+    <Box w="100%" bg={bgCard} p={4} borderWidth="1px" rounded="md" shadow="sm">
       <VStack align="start" spacing={4}>
-        <Box w="100%" pb={2} borderBottom="2px solid" borderColor="gray.300">
+        <Box w="100%" pb={2} borderBottom="2px solid" borderColor={borderColor}>
           <HStack justify="space-between" align="center">
             <VStack align="start" spacing={1}>
-              <Text fontWeight="bold" fontSize="lg" color="gray.800">
+              <Text fontWeight="bold" fontSize="lg" color={textPrimary}>
                 Spectral Deviation Heat Map
               </Text>
-              <Text fontSize="xs" color="gray.600">
+              <Text fontSize="xs" color={textSecondary}>
                 Visual representation of deviation intensity across the spectrum
               </Text>
             </VStack>
             <HStack spacing={2}>
-              <Box textAlign="center" px={3} py={1} bg="green.100" borderRadius="md">
-                <Text fontSize="xs" fontWeight="bold" color="green.800">Good</Text>
+              <Box textAlign="center" px={3} py={1} bg={legendGreenBg} borderRadius="md">
+                <Text fontSize="xs" fontWeight="bold" color={legendGreenText}>Good</Text>
               </Box>
-              <Box textAlign="center" px={3} py={1} bg="yellow.100" borderRadius="md">
-                <Text fontSize="xs" fontWeight="bold" color="yellow.800">Monitor</Text>
+              <Box textAlign="center" px={3} py={1} bg={legendYellowBg} borderRadius="md">
+                <Text fontSize="xs" fontWeight="bold" color={legendYellowText}>Monitor</Text>
               </Box>
-              <Box textAlign="center" px={3} py={1} bg="red.100" borderRadius="md">
-                <Text fontSize="xs" fontWeight="bold" color="red.800">Critical</Text>
+              <Box textAlign="center" px={3} py={1} bg={legendRedBg} borderRadius="md">
+                <Text fontSize="xs" fontWeight="bold" color={legendRedText}>Critical</Text>
               </Box>
             </HStack>
           </HStack>
@@ -262,7 +273,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
             {/* Main heat bar with improved visuals */}
             <Box w="100%" position="relative">
               <HStack justify="space-between" mb={3}>
-                <Text fontSize="md" fontWeight="bold" color="gray.800">
+                <Text fontSize="md" fontWeight="bold" color={textPrimary}>
                   Deviation Intensity Map
                 </Text>
                 {selectedSampleName && (
@@ -284,10 +295,10 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                   w="100%"
                   h="80px"
                   border="2px solid"
-                  borderColor="gray.400"
+                  borderColor={useColorModeValue('gray.400', 'gray.600')}
                   borderRadius="lg"
                   overflow="visible"
-                  bg="white"
+                  bg={bgCard}
                   boxShadow="md"
                 >
                   {/* Weight ranges background */}
@@ -297,7 +308,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                 </Box>
                 
                 {/* Axis label */}
-                <Text fontSize="sm" fontWeight="semibold" color="gray.700" textAlign="center" mt={2}>
+                <Text fontSize="sm" fontWeight="semibold" color={useColorModeValue('gray.700', 'gray.300')} textAlign="center" mt={2}>
                   Wavenumber (cm⁻¹)
                 </Text>
               </Box>
@@ -308,53 +319,53 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
               <Box 
                 flex={1} 
                 p={3} 
-                bg="red.50" 
+                bg={useColorModeValue('red.50', 'red.900')}
                 borderRadius="lg" 
                 borderWidth="1px" 
-                borderColor="red.200"
+                borderColor={useColorModeValue('red.200', 'red.700')}
               >
-                <Text fontSize="xs" fontWeight="medium" color="red.700" mb={1}>
+                <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('red.700', 'red.200')} mb={1}>
                   Max Deviation
                 </Text>
-                <Text fontSize="lg" fontWeight="bold" color="red.600">
+                <Text fontSize="lg" fontWeight="bold" color={useColorModeValue('red.600', 'red.300')}>
                   {maxDeviation.toFixed(4)}
                 </Text>
               </Box>
               <Box 
                 flex={1} 
                 p={3} 
-                bg="orange.50" 
+                bg={useColorModeValue('orange.50', 'orange.900')}
                 borderRadius="lg" 
                 borderWidth="1px" 
-                borderColor="orange.200"
+                borderColor={useColorModeValue('orange.200', 'orange.700')}
               >
-                <Text fontSize="xs" fontWeight="medium" color="orange.700" mb={1}>
+                <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('orange.700', 'orange.200')} mb={1}>
                   Avg Deviation
                 </Text>
-                <Text fontSize="lg" fontWeight="bold" color="orange.600">
+                <Text fontSize="lg" fontWeight="bold" color={useColorModeValue('orange.600', 'orange.300')}>
                   {(deviation.reduce((a, b) => a + b, 0) / deviation.length).toFixed(4)}
                 </Text>
               </Box>
               <Box 
                 flex={1} 
                 p={3} 
-                bg="green.50" 
+                bg={useColorModeValue('green.50', 'green.900')}
                 borderRadius="lg" 
                 borderWidth="1px" 
-                borderColor="green.200"
+                borderColor={useColorModeValue('green.200', 'green.700')}
               >
-                <Text fontSize="xs" fontWeight="medium" color="green.700" mb={1}>
+                <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('green.700', 'green.200')} mb={1}>
                   Min Deviation
                 </Text>
-                <Text fontSize="lg" fontWeight="bold" color="green.600">
+                <Text fontSize="lg" fontWeight="bold" color={useColorModeValue('green.600', 'green.300')}>
                   {minDeviation.toFixed(4)}
                 </Text>
               </Box>
             </HStack>
 
             {/* Color scale legend */}
-            <Box w="100%" p={3} bg="gray.50" borderRadius="lg" borderWidth="1px" borderColor="gray.200">
-              <Text fontSize="sm" fontWeight="bold" mb={2} color="gray.700">
+            <Box w="100%" p={3} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="lg" borderWidth="1px" borderColor={borderColor}>
+              <Text fontSize="sm" fontWeight="bold" mb={2} color={textPrimary}>
                 Deviation Color Scale
               </Text>
               <VStack spacing={2} align="stretch">
@@ -364,7 +375,7 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                     flex={1}
                     h="30px"
                     border="2px solid"
-                    borderColor="gray.300"
+                    borderColor={borderColor}
                     borderRadius="md"
                     overflow="hidden"
                     boxShadow="sm"
@@ -375,19 +386,19 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                 <HStack justify="space-between">
                   <HStack spacing={1}>
                     <Box w="12px" h="12px" bg="rgb(0, 255, 0)" borderRadius="sm" />
-                    <Text fontSize="xs" fontWeight="medium" color="gray.700">
+                    <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('gray.700', 'gray.300')}>
                       Low (0.000)
                     </Text>
                   </HStack>
                   <HStack spacing={1}>
                     <Box w="12px" h="12px" bg="rgb(255, 255, 0)" borderRadius="sm" />
-                    <Text fontSize="xs" fontWeight="medium" color="gray.700">
+                    <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('gray.700', 'gray.300')}>
                       Medium
                     </Text>
                   </HStack>
                   <HStack spacing={1}>
                     <Box w="12px" h="12px" bg="rgb(255, 0, 0)" borderRadius="sm" />
-                    <Text fontSize="xs" fontWeight="medium" color="gray.700">
+                    <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('gray.700', 'gray.300')}>
                       High ({maxDeviation.toFixed(3)})
                     </Text>
                   </HStack>
@@ -397,8 +408,8 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
 
             {/* Weight Ranges Legend */}
             {abnormalityWeights && abnormalityWeights.length > 0 && (
-              <Box w="100%" p={4} bg="purple.50" borderRadius="lg" borderWidth="2px" borderColor="purple.200">
-                <Text fontSize="sm" fontWeight="bold" mb={3} color="purple.900">
+              <Box w="100%" p={4} bg={useColorModeValue('purple.50', 'purple.900')} borderRadius="lg" borderWidth="2px" borderColor={useColorModeValue('purple.200', 'purple.700')}>
+                <Text fontSize="sm" fontWeight="bold" mb={3} color={useColorModeValue('purple.900', 'purple.100')}>
                   ⚖️ Applied Weight Ranges
                 </Text>
                 <VStack spacing={2} align="stretch">
@@ -415,25 +426,25 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                         key={index} 
                         spacing={3} 
                         p={2} 
-                        bg="white" 
+                        bg={bgCard}
                         borderRadius="md"
                         borderWidth="1px"
-                        borderColor="purple.100"
+                        borderColor={useColorModeValue('purple.100', 'purple.800')}
                       >
                         <Box
                           w="24px"
                           h="24px"
                           backgroundColor={color}
                           border="2px solid"
-                          borderColor="gray.400"
+                          borderColor={useColorModeValue('gray.400', 'gray.600')}
                           borderRadius="md"
                           flexShrink={0}
                         />
                         <VStack align="start" spacing={0} flex={1}>
-                          <Text fontSize="xs" fontWeight="bold" color="gray.800">
+                          <Text fontSize="xs" fontWeight="bold" color={textPrimary}>
                             {range.label}
                           </Text>
-                          <Text fontSize="xs" color="gray.600">
+                          <Text fontSize="xs" color={textSecondary}>
                             {range.min} - {range.max} cm⁻¹
                           </Text>
                         </VStack>
@@ -444,47 +455,47 @@ const DeviationHeatBar = React.forwardRef<any, Props>(({
                     );
                   })}
                 </VStack>
-                <Text fontSize="xs" color="purple.700" mt={2} fontStyle="italic">
+                <Text fontSize="xs" color={useColorModeValue('purple.700', 'purple.300')} mt={2} fontStyle="italic">
                   💡 Background colors on heat map show these weighted regions
                 </Text>
               </Box>
             )}
           </VStack>
         ) : (
-          <Text fontSize="sm" color="gray.500">
+          <Text fontSize="sm" color={textSecondary}>
             Upload baseline and multiple samples to see oxidation heat map.
           </Text>
         )}
 
         {/* Interactive guidance */}
         {hasData && (
-          <Box w="100%" p={4} bg="blue.50" rounded="lg" borderWidth="2px" borderColor="blue.300">
+          <Box w="100%" p={4} bg={useColorModeValue('blue.50', 'blue.900')} rounded="lg" borderWidth="2px" borderColor={useColorModeValue('blue.300', 'blue.700')}>
             <HStack spacing={2} mb={2}>
               <Text fontSize="lg">💡</Text>
-              <Text fontSize="sm" fontWeight="bold" color="blue.900">
+              <Text fontSize="sm" fontWeight="bold" color={useColorModeValue('blue.900', 'blue.100')}>
                 How to Read This Map
               </Text>
             </HStack>
             <VStack align="start" spacing={1}>
               <HStack spacing={2}>
                 <Box w="8px" h="8px" bg="rgb(0, 255, 0)" borderRadius="full" />
-                <Text fontSize="xs" color="blue.800">
+                <Text fontSize="xs" color={useColorModeValue('blue.800', 'blue.200')}>
                   <strong>Green zones:</strong> Stable grease, minimal deviation from baseline
                 </Text>
               </HStack>
               <HStack spacing={2}>
                 <Box w="8px" h="8px" bg="rgb(255, 255, 0)" borderRadius="full" />
-                <Text fontSize="xs" color="blue.800">
+                <Text fontSize="xs" color={useColorModeValue('blue.800', 'blue.200')}>
                   <strong>Yellow zones:</strong> Moderate changes, monitor for trending
                 </Text>
               </HStack>
               <HStack spacing={2}>
                 <Box w="8px" h="8px" bg="rgb(255, 0, 0)" borderRadius="full" />
-                <Text fontSize="xs" color="blue.800">
+                <Text fontSize="xs" color={useColorModeValue('blue.800', 'blue.200')}>
                   <strong>Red zones:</strong> Critical oxidation/contamination detected
                 </Text>
               </HStack>
-              <Text fontSize="xs" color="blue.700" mt={2} fontStyle="italic">
+              <Text fontSize="xs" color={useColorModeValue('blue.700', 'blue.300')} mt={2} fontStyle="italic">
                 💡 Hover over any section to see exact wavenumber and deviation values
               </Text>
             </VStack>

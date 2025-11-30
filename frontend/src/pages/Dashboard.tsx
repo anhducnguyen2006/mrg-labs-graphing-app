@@ -10,7 +10,8 @@ import {
   Text,
   Badge,
   Flex,
-  ButtonGroup
+  ButtonGroup,
+  useColorModeValue
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/dashboard/FileUploadBox';
 import GraphPreview from '../components/dashboard/GraphPreview';
@@ -170,17 +171,17 @@ const Dashboard: React.FC = () => {
           <VStack align="stretch" spacing={3} w="100%">
             <Flex justify="space-between" align="center" w="100%">
               <HStack spacing={4}>
-                <Text fontSize="md" fontWeight="semibold" color="gray.700">
+                <Text fontSize="md" fontWeight="semibold" color={useColorModeValue('gray.700', 'gray.200')}>
                   Scoring Method:
                 </Text>
                 <ButtonGroup size="sm" isAttached variant="outline">
                   <Button
                     onClick={() => setScoringMethod('rmse')}
                     colorScheme={scoringMethod === 'rmse' ? 'blue' : 'gray'}
-                    bg={scoringMethod === 'rmse' ? 'blue.500' : 'white'}
-                    color={scoringMethod === 'rmse' ? 'white' : 'gray.700'}
+                    bg={scoringMethod === 'rmse' ? 'blue.500' : useColorModeValue('white', 'gray.700')}
+                    color={scoringMethod === 'rmse' ? 'white' : useColorModeValue('gray.700', 'gray.200')}
                     _hover={{
-                      bg: scoringMethod === 'rmse' ? 'blue.600' : 'gray.100'
+                      bg: scoringMethod === 'rmse' ? 'blue.600' : useColorModeValue('gray.100', 'gray.600')
                     }}
                     fontWeight={scoringMethod === 'rmse' ? 'bold' : 'normal'}
                   >
@@ -189,10 +190,10 @@ const Dashboard: React.FC = () => {
                   <Button
                     onClick={() => setScoringMethod('hybrid')}
                     colorScheme={scoringMethod === 'hybrid' ? 'blue' : 'gray'}
-                    bg={scoringMethod === 'hybrid' ? 'blue.500' : 'white'}
-                    color={scoringMethod === 'hybrid' ? 'white' : 'gray.700'}
+                    bg={scoringMethod === 'hybrid' ? 'blue.500' : useColorModeValue('white', 'gray.700')}
+                    color={scoringMethod === 'hybrid' ? 'white' : useColorModeValue('gray.700', 'gray.200')}
                     _hover={{
-                      bg: scoringMethod === 'hybrid' ? 'blue.600' : 'gray.100'
+                      bg: scoringMethod === 'hybrid' ? 'blue.600' : useColorModeValue('gray.100', 'gray.600')
                     }}
                     fontWeight={scoringMethod === 'hybrid' ? 'bold' : 'normal'}
                   >
@@ -201,10 +202,10 @@ const Dashboard: React.FC = () => {
                   <Button
                     onClick={() => setScoringMethod('pearson')}
                     colorScheme={scoringMethod === 'pearson' ? 'blue' : 'gray'}
-                    bg={scoringMethod === 'pearson' ? 'blue.500' : 'white'}
-                    color={scoringMethod === 'pearson' ? 'white' : 'gray.700'}
+                    bg={scoringMethod === 'pearson' ? 'blue.500' : useColorModeValue('white', 'gray.700')}
+                    color={scoringMethod === 'pearson' ? 'white' : useColorModeValue('gray.700', 'gray.200')}
                     _hover={{
-                      bg: scoringMethod === 'pearson' ? 'blue.600' : 'gray.100'
+                      bg: scoringMethod === 'pearson' ? 'blue.600' : useColorModeValue('gray.100', 'gray.600')
                     }}
                     fontWeight={scoringMethod === 'pearson' ? 'bold' : 'normal'}
                   >
@@ -213,10 +214,10 @@ const Dashboard: React.FC = () => {
                   <Button
                     onClick={() => setScoringMethod('area')}
                     colorScheme={scoringMethod === 'area' ? 'blue' : 'gray'}
-                    bg={scoringMethod === 'area' ? 'blue.500' : 'white'}
-                    color={scoringMethod === 'area' ? 'white' : 'gray.700'}
+                    bg={scoringMethod === 'area' ? 'blue.500' : useColorModeValue('white', 'gray.700')}
+                    color={scoringMethod === 'area' ? 'white' : useColorModeValue('gray.700', 'gray.200')}
                     _hover={{
-                      bg: scoringMethod === 'area' ? 'blue.600' : 'gray.100'
+                      bg: scoringMethod === 'area' ? 'blue.600' : useColorModeValue('gray.100', 'gray.600')
                     }}
                     fontWeight={scoringMethod === 'area' ? 'bold' : 'normal'}
                   >
@@ -237,10 +238,10 @@ const Dashboard: React.FC = () => {
             {/* Selected Sample Info */}
             {selectedSample && sampleScores[selectedSample] !== undefined && (
               <HStack>
-                <Text fontSize="md" fontWeight="medium" color="gray.700">
+                <Text fontSize="md" fontWeight="medium" color={useColorModeValue('gray.700', 'gray.300')}>
                   Selected Sample:
                 </Text>
-                <Text fontSize="md" fontWeight="bold" color="blue.700" maxW="300px" noOfLines={1}>
+                <Text fontSize="md" fontWeight="bold" color={useColorModeValue('blue.700', 'blue.300')} maxW="300px" noOfLines={1}>
                   {selectedSample?.replace('.csv', '') || ''}
                 </Text>
                 <Badge

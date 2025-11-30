@@ -23,7 +23,8 @@ import {
   Box,
   useToast,
   Tooltip,
-  Icon
+  Icon,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { SearchIcon, DownloadIcon } from '@chakra-ui/icons';
 import { FaFolderOpen } from 'react-icons/fa';
@@ -220,20 +221,20 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                     top="50%"
                     transform="translateY(-50%)"
                     pointerEvents="none"
-                    color="gray.400"
+                    color={useColorModeValue('gray.400', 'gray.500')}
                     fontSize="xs"
                   >
                     .zip
                   </Box>
                 </InputGroup>
-                <Text fontSize="xs" color="gray.500" mt={1}>
+                <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1}>
                   Default: {defaultZipName}.zip
                 </Text>
               </Box>
 
               {/* Download Info */}
-              <Box w="100%" p={3} bg="blue.50" borderRadius="md">
-                <Text fontSize="xs" color="blue.700">
+              <Box w="100%" p={3} bg={useColorModeValue('blue.50', 'blue.900')} borderRadius="md">
+                <Text fontSize="xs" color={useColorModeValue('blue.700', 'blue.200')}>
                   💡 <strong>Export Options:</strong> Use "Export Graphs" to choose a custom folder (Chromium browsers only), or use standard "Export" for default Downloads folder.
                 </Text>
               </Box>
@@ -250,14 +251,14 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                 <Button size="xs" onClick={handleClearAll} variant="outline">
                   Clear All
                 </Button>
-                <Text fontSize="xs" color="gray.600">
+                <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
                   {selectedSamples.length} of {samples.length} selected
                 </Text>
               </HStack>
 
               <InputGroup mb={2} size="sm">
                 <InputLeftElement pointerEvents="none">
-                  <SearchIcon color="gray.300" boxSize={3} />
+                  <SearchIcon color={useColorModeValue('gray.300', 'gray.600')} boxSize={3} />
                 </InputLeftElement>
                 <Input
                   placeholder="Search samples..."
@@ -266,7 +267,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                 />
               </InputGroup>
 
-              <Box maxH="300px" overflowY="auto" border="1px" borderColor="gray.200" borderRadius="md" p={2}>
+              <Box maxH="300px" overflowY="auto" border="1px" borderColor={useColorModeValue('gray.200', 'gray.600')} borderRadius="md" p={2}>
                 <CheckboxGroup value={selectedSamples} onChange={(value) => setSelectedSamples(value as string[])}>
                   <VStack align="start" spacing={1}>
                     {filteredSamples.map((sample) => (
@@ -278,7 +279,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                 </CheckboxGroup>
                 
                 {filteredSamples.length === 0 && searchTerm && (
-                  <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
+                  <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')} textAlign="center" py={4}>
                     No samples found matching "{searchTerm}"
                   </Text>
                 )}

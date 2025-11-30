@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, HStack, Heading, useColorModeValue } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import UserProfileMenu from './UserProfileMenu';
+import ColorModeToggle from '../shared/ColorModeToggle';
 import { User } from '../../services/auth';
 
 interface NavbarProps {
@@ -25,6 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
     const bgColor = useColorModeValue('white', 'gray.800');
     const borderColor = useColorModeValue('gray.200', 'gray.700');
+    const hoverBg = useColorModeValue('blue.50', 'blue.900');
 
     return (
         <Box
@@ -47,7 +49,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         variant="ghost"
                         size="md"
                         colorScheme="blue"
-                        _hover={{ bg: 'blue.50' }}
+                        _hover={{ bg: hoverBg }}
                     >
                         {isSidebarOpen ? <CloseIcon boxSize={3} /> : <HamburgerIcon boxSize={4} />}
                     </Button>
@@ -56,8 +58,9 @@ const Navbar: React.FC<NavbarProps> = ({
                     </Heading>
                 </HStack>
 
-                <HStack spacing={4}>
+                <HStack spacing={2}>
                     {rightContent && <Box>{rightContent}</Box>}
+                    <ColorModeToggle />
                     <UserProfileMenu
                         user={user}
                         onChangePasswordClick={onChangePasswordClick}

@@ -19,7 +19,8 @@ import {
   Badge,
   Flex,
   Collapse,
-  useDisclosure
+  useDisclosure,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { SearchIcon, SmallCloseIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { FiHeart, FiArrowUp, FiArrowDown } from 'react-icons/fi';
@@ -59,6 +60,28 @@ const SampleSidebar: React.FC<Props> = ({
   // Collapsible controls
   const { isOpen: isAlertsOpen, onToggle: onToggleAlerts } = useDisclosure({ defaultIsOpen: true });
   const { isOpen: isFiltersOpen, onToggle: onToggleFilters } = useDisclosure({ defaultIsOpen: true });
+
+  // Color mode values
+  const bgSidebar = useColorModeValue('gray.50', 'gray.900');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const bgSurface = useColorModeValue('white', 'gray.800');
+  const textPrimary = useColorModeValue('gray.800', 'gray.100');
+  const textSecondary = useColorModeValue('gray.600', 'gray.400');
+  const textMuted = useColorModeValue('gray.500', 'gray.500');
+  const searchIconColor = useColorModeValue('gray.300', 'gray.600');
+  const inputBg = useColorModeValue('white', 'gray.700');
+  const inputBorder = useColorModeValue('gray.200', 'gray.600');
+  const menuBg = useColorModeValue('white', 'gray.800');
+  const menuBorder = useColorModeValue('gray.200', 'gray.600');
+  const menuItemHoverBg = useColorModeValue('gray.50', 'gray.700');
+  const selectedItemBg = useColorModeValue('blue.50', 'blue.900');
+  const selectedItemBorder = useColorModeValue('blue.200', 'blue.700');
+  const selectedItemText = useColorModeValue('blue.700', 'blue.300');
+  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const positionBadgeBg = useColorModeValue('blue.500', 'blue.600');
+  const alertBg = useColorModeValue('red.50', 'red.900');
+  const criticalAlertSelectedBg = useColorModeValue('red.100', 'red.800');
+  const heartRed = useColorModeValue('#E53E3E', '#FC8181');
 
   const getSortLabel = (sortOption: SortOption) => {
     switch (sortOption) {
@@ -153,9 +176,9 @@ const SampleSidebar: React.FC<Props> = ({
     <Box
       w="300px"
       h="100vh"
-      bg="gray.50"
+      bg={bgSidebar}
       borderRight="1px"
-      borderColor="gray.200"
+      borderColor={borderColor}
       p={4}
       display="flex"
       flexDirection="column"
@@ -163,12 +186,12 @@ const SampleSidebar: React.FC<Props> = ({
     >
       <VStack align="start" spacing={4} flex={1} h="100%" overflow="hidden">
         {/* Sample Files Section */}
-        <Text fontSize="lg" fontWeight="bold">Sample Files</Text>
+        <Text fontSize="lg" fontWeight="bold" color={textPrimary}>Sample Files</Text>
 
         {/* Critical Samples Alert - Collapsible with clickable samples */}
         <Box w="100%">
           <HStack justify="space-between" align="center" mb={2}>
-            <Text fontSize="md" fontWeight="semibold" color="red.600">
+            <Text fontSize="md" fontWeight="semibold" color={useColorModeValue('red.600', 'red.400')}>
               🚨 Critical Alerts
             </Text>
             <IconButton
@@ -180,14 +203,14 @@ const SampleSidebar: React.FC<Props> = ({
             />
           </HStack>
           <Collapse in={isAlertsOpen} animateOpacity>
-            <Box p={3} bg="red.50" borderRadius="md">
+            <Box p={3} bg={alertBg} borderRadius="md">
               {criticalCount === 0 ? (
-                <Text fontSize="sm" color="green.700">
+                <Text fontSize="sm" color={useColorModeValue('green.700', 'green.300')}>
                   ✓ No critical samples
                 </Text>
               ) : (
                 <VStack align="start" spacing={2}>
-                  <Text fontSize="xs" fontWeight="semibold" color="red.800">
+                  <Text fontSize="xs" fontWeight="semibold" color={useColorModeValue('red.800', 'red.300')}>
                     ⚠️ {criticalCount} critical sample{criticalCount > 1 ? 's' : ''} detected
                   </Text>
                   <VStack align="start" spacing={1} w="100%" maxH="150px" overflowY="auto">
@@ -205,8 +228,8 @@ const SampleSidebar: React.FC<Props> = ({
                           w="100%"
                           justifyContent="space-between"
                           onClick={() => onSelectSample(sample.filename)}
-                          bg={selectedSampleName === sample.filename ? 'red.100' : 'white'}
-                          _hover={{ bg: 'red.100' }}
+                          bg={selectedSampleName === sample.filename ? criticalAlertSelectedBg : bgSurface}
+                          _hover={{ bg: criticalAlertSelectedBg }}
                           px={2}
                         >
                           <Text fontSize="xs" noOfLines={1} flex={1} textAlign="left">
@@ -227,19 +250,19 @@ const SampleSidebar: React.FC<Props> = ({
         {/* Search and Filters - Always visible */}
         <InputGroup>
           <InputLeftElement pointerEvents="none">
-            <SearchIcon color="gray.300" />
+            <SearchIcon color={searchIconColor} />
           </InputLeftElement>
           <Input
             placeholder="Search samples..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            bg="white"
+            bg={inputBg}
             borderRadius="md"
             border="1px solid"
-            borderColor="gray.200"
+            borderColor={inputBorder}
             _focus={{ 
-              borderColor: "blue.400",
-              boxShadow: "0 0 0 1px blue.400"
+              borderColor: useColorModeValue("blue.400", "blue.500"),
+              boxShadow: useColorModeValue("0 0 0 1px #3182ce", "0 0 0 1px #4299e1")
             }}
           />
         </InputGroup>
@@ -247,7 +270,7 @@ const SampleSidebar: React.FC<Props> = ({
         {/* Collapsible Filter Controls */}
         <Box w="100%">
           <HStack justify="space-between" align="center" mb={2}>
-            <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+            <Text fontSize="sm" fontWeight="semibold" color={textPrimary}>
               Filters & Sort
             </Text>
             <IconButton
@@ -263,7 +286,7 @@ const SampleSidebar: React.FC<Props> = ({
               {/* Filter Controls - Stacked Layout */}
               {sampleScores && Object.keys(sampleScores).length > 0 && (
                 <Box w="100%">
-                  <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={2}>
+                  <Text fontSize="xs" fontWeight="medium" color={textSecondary} mb={2}>
                     Anomaly Filter
                   </Text>
                   <VStack spacing={2} w="100%">
@@ -320,7 +343,7 @@ const SampleSidebar: React.FC<Props> = ({
               )}
 
               <Box w="100%">
-                <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
+                <Text fontSize="xs" fontWeight="medium" color={textSecondary} mb={1}>
                   Sort Options
                 </Text>
                 <Menu>
@@ -331,15 +354,15 @@ const SampleSidebar: React.FC<Props> = ({
                     size="sm"
                     w="100%"
                     justifyContent="space-between"
-                    bg="white"
+                    bg={bgSurface}
                     border="1px solid"
-                    borderColor="gray.200"
+                    borderColor={inputBorder}
                     _hover={{ 
-                      borderColor: "gray.300",
-                      bg: "gray.50"
+                      borderColor: borderColor,
+                      bg: hoverBg
                     }}
                     _active={{ 
-                      bg: "gray.100" 
+                      bg: hoverBg 
                     }}
                     fontWeight="normal"
                   >
@@ -348,24 +371,24 @@ const SampleSidebar: React.FC<Props> = ({
                     </Text>
                   </MenuButton>
                   <MenuList
-                    bg="white"
+                    bg={menuBg}
                     border="1px solid"
-                    borderColor="gray.200"
+                    borderColor={menuBorder}
                     boxShadow="lg"
                     borderRadius="md"
                     py={2}
                     minW="200px"
                   >
-                    <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                    <Text fontSize="xs" fontWeight="bold" color={textMuted} px={3} py={1} mb={1}>
                       ALPHABETICAL
                     </Text>
                     <MenuItem
                       icon={<FaSortAlphaDown />}
                       onClick={() => setSortBy('name-asc')}
-                      bg={sortBy === 'name-asc' ? 'blue.50' : 'transparent'}
-                      color={sortBy === 'name-asc' ? 'blue.700' : 'gray.700'}
+                      bg={sortBy === 'name-asc' ? selectedItemBg : 'transparent'}
+                      color={sortBy === 'name-asc' ? selectedItemText : textPrimary}
                       fontWeight={sortBy === 'name-asc' ? 'semibold' : 'normal'}
-                      _hover={{ bg: 'gray.50' }}
+                      _hover={{ bg: menuItemHoverBg }}
                       borderRadius="md"
                       mx={2}
                     >
@@ -374,10 +397,10 @@ const SampleSidebar: React.FC<Props> = ({
                     <MenuItem
                       icon={<FaSortAlphaUp />}
                       onClick={() => setSortBy('name-desc')}
-                      bg={sortBy === 'name-desc' ? 'blue.50' : 'transparent'}
-                      color={sortBy === 'name-desc' ? 'blue.700' : 'gray.700'}
+                      bg={sortBy === 'name-desc' ? selectedItemBg : 'transparent'}
+                      color={sortBy === 'name-desc' ? selectedItemText : textPrimary}
                       fontWeight={sortBy === 'name-desc' ? 'semibold' : 'normal'}
-                      _hover={{ bg: 'gray.50' }}
+                      _hover={{ bg: menuItemHoverBg }}
                       borderRadius="md"
                       mx={2}
                     >
@@ -386,16 +409,16 @@ const SampleSidebar: React.FC<Props> = ({
 
                     <MenuDivider />
 
-                    <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                    <Text fontSize="xs" fontWeight="bold" color={textMuted} px={3} py={1} mb={1}>
                       BY PRIORITY
                     </Text>
                     <MenuItem
-                      icon={<FaHeartFilled color="#E53E3E" />}
+                      icon={<FaHeartFilled color={heartRed} />}
                       onClick={() => setSortBy('favorites')}
-                      bg={sortBy === 'favorites' ? 'blue.50' : 'transparent'}
-                      color={sortBy === 'favorites' ? 'blue.700' : 'gray.700'}
+                      bg={sortBy === 'favorites' ? selectedItemBg : 'transparent'}
+                      color={sortBy === 'favorites' ? selectedItemText : textPrimary}
                       fontWeight={sortBy === 'favorites' ? 'semibold' : 'normal'}
-                      _hover={{ bg: 'gray.50' }}
+                      _hover={{ bg: menuItemHoverBg }}
                       borderRadius="md"
                       mx={2}
                     >
@@ -409,10 +432,10 @@ const SampleSidebar: React.FC<Props> = ({
                     <MenuItem
                       icon={<FiArrowDown />}
                       onClick={() => setSortBy('date-added')}
-                      bg={sortBy === 'date-added' ? 'blue.50' : 'transparent'}
-                      color={sortBy === 'date-added' ? 'blue.700' : 'gray.700'}
+                      bg={sortBy === 'date-added' ? selectedItemBg : 'transparent'}
+                      color={sortBy === 'date-added' ? selectedItemText : textPrimary}
                       fontWeight={sortBy === 'date-added' ? 'semibold' : 'normal'}
-                      _hover={{ bg: 'gray.50' }}
+                      _hover={{ bg: menuItemHoverBg }}
                       borderRadius="md"
                       mx={2}
                     >
@@ -423,16 +446,16 @@ const SampleSidebar: React.FC<Props> = ({
                     {sampleScores && Object.keys(sampleScores).length > 0 && (
                       <>
                         <MenuDivider />
-                        <Text fontSize="xs" fontWeight="bold" color="gray.500" px={3} py={1} mb={1}>
+                        <Text fontSize="xs" fontWeight="bold" color={textMuted} px={3} py={1} mb={1}>
                           ANOMALY SCORE
                         </Text>
                         <MenuItem
                           icon={<FaSortNumericDown />}
                           onClick={() => setSortBy('score-desc')}
-                          bg={sortBy === 'score-desc' ? 'blue.50' : 'transparent'}
-                          color={sortBy === 'score-desc' ? 'blue.700' : 'gray.700'}
+                          bg={sortBy === 'score-desc' ? selectedItemBg : 'transparent'}
+                          color={sortBy === 'score-desc' ? selectedItemText : textPrimary}
                           fontWeight={sortBy === 'score-desc' ? 'semibold' : 'normal'}
-                          _hover={{ bg: 'gray.50' }}
+                          _hover={{ bg: menuItemHoverBg }}
                           borderRadius="md"
                           mx={2}
                         >
@@ -441,10 +464,10 @@ const SampleSidebar: React.FC<Props> = ({
                         <MenuItem
                           icon={<FaSortNumericUp />}
                           onClick={() => setSortBy('score-asc')}
-                          bg={sortBy === 'score-asc' ? 'blue.50' : 'transparent'}
-                          color={sortBy === 'score-asc' ? 'blue.700' : 'gray.700'}
+                          bg={sortBy === 'score-asc' ? selectedItemBg : 'transparent'}
+                          color={sortBy === 'score-asc' ? selectedItemText : textPrimary}
                           fontWeight={sortBy === 'score-asc' ? 'semibold' : 'normal'}
-                          _hover={{ bg: 'gray.50' }}
+                          _hover={{ bg: menuItemHoverBg }}
                           borderRadius="md"
                           mx={2}
                         >
@@ -462,7 +485,7 @@ const SampleSidebar: React.FC<Props> = ({
         {/* Results Summary */}
         {samples.length > 0 && (
           <Flex justify="space-between" align="center" w="100%" px={1} flexShrink={0}>
-            <Text fontSize="xs" color="gray.500">
+            <Text fontSize="xs" color={textMuted}>
               {filteredAndSortedSamples.length} of {samples.length} files
               {searchTerm && ` matching "${searchTerm}"`}
             </Text>
@@ -481,14 +504,14 @@ const SampleSidebar: React.FC<Props> = ({
               <ListItem key={sample.filename}>
                 <HStack
                   p={3}
-                  bg={selectedSampleName === sample.filename ? 'blue.50' : 'white'}
+                  bg={selectedSampleName === sample.filename ? selectedItemBg : bgSurface}
                   border="1px solid"
-                  borderColor={selectedSampleName === sample.filename ? 'blue.200' : 'gray.200'}
+                  borderColor={selectedSampleName === sample.filename ? selectedItemBorder : borderColor}
                   borderRadius="md"
                   cursor="pointer"
                   _hover={{ 
-                    bg: selectedSampleName === sample.filename ? 'blue.100' : 'gray.50',
-                    borderColor: selectedSampleName === sample.filename ? 'blue.300' : 'gray.300',
+                    bg: selectedSampleName === sample.filename ? selectedItemBg : hoverBg,
+                    borderColor: selectedSampleName === sample.filename ? selectedItemBorder : borderColor,
                     transform: 'translateY(-1px)',
                     boxShadow: 'sm'
                   }}
@@ -503,7 +526,7 @@ const SampleSidebar: React.FC<Props> = ({
                       position="absolute"
                       left={1}
                       top={1}
-                      bg="blue.500"
+                      bg={positionBadgeBg}
                       color="white"
                       fontSize="xs"
                       w={4}
@@ -518,17 +541,18 @@ const SampleSidebar: React.FC<Props> = ({
                     </Box>
                   )}
 
-                  <VStack align="start" spacing={0} flex={1} ml={sortBy === 'date-added' || sortBy === 'favorites' ? 4 : 0}>
-                    <Flex align="center" w="100%">
+                  <VStack align="start" spacing={0} flex={1} ml={sortBy === 'date-added' || sortBy === 'favorites' ? 4 : 0} minW={0}>
+                    <Flex align="center" w="100%" gap={1}>
                       {sample.isFavorite && (
-                        <FaHeart color="#E53E3E" size="12" style={{ marginRight: '6px' }} />
+                        <FaHeart color={heartRed} size="12" style={{ flexShrink: 0 }} />
                       )}
                       <Text
                         fontSize="sm"
                         fontWeight={selectedSampleName === sample.filename ? 'semibold' : 'normal'}
                         noOfLines={1}
                         flex={1}
-                        color={selectedSampleName === sample.filename ? 'blue.700' : 'gray.700'}
+                        minW={0}
+                        color={selectedSampleName === sample.filename ? selectedItemText : textPrimary}
                       >
                         {sample.filename}
                       </Text>
@@ -539,13 +563,15 @@ const SampleSidebar: React.FC<Props> = ({
                           size="sm"
                           fontSize="xs"
                           fontWeight="bold"
-                          ml={2}
+                          flexShrink={0}
+                          minW="42px"
+                          textAlign="center"
                         >
                           {Math.round(sampleScores[sample.filename])}
                         </Badge>
                       )}
                     </Flex>
-                    <Text fontSize="xs" color="gray.500">
+                    <Text fontSize="xs" color={textMuted}>
                       {sample.x?.length || 0} data points
                     </Text>
                   </VStack>
@@ -555,14 +581,14 @@ const SampleSidebar: React.FC<Props> = ({
                       icon={sample.isFavorite ? <FaHeart /> : <FiHeart />}
                       size="xs"
                       variant="ghost"
-                      color={sample.isFavorite ? "red.500" : "gray.400"}
+                      color={sample.isFavorite ? useColorModeValue("red.500", "red.400") : useColorModeValue("gray.400", "gray.500")}
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleFavorite(sample.filename);
                       }}
                       _hover={{ 
-                        bg: sample.isFavorite ? 'red.100' : 'gray.100',
-                        color: sample.isFavorite ? "red.600" : "red.400"
+                        bg: sample.isFavorite ? useColorModeValue('red.100', 'red.900') : hoverBg,
+                        color: sample.isFavorite ? useColorModeValue("red.600", "red.300") : useColorModeValue("red.400", "red.400")
                       }}
                     />
                     <IconButton
@@ -574,7 +600,7 @@ const SampleSidebar: React.FC<Props> = ({
                         e.stopPropagation();
                         onRemoveSample(sample.filename);
                       }}
-                      _hover={{ bg: 'red.100' }}
+                      _hover={{ bg: useColorModeValue('red.100', 'red.900') }}
                     />
                   </HStack>
                 </HStack>
@@ -583,13 +609,13 @@ const SampleSidebar: React.FC<Props> = ({
           </List>
 
           {filteredAndSortedSamples.length === 0 && searchTerm && (
-            <Text fontSize="sm" color="gray.500" textAlign="center" mt={4}>
+            <Text fontSize="sm" color={textMuted} textAlign="center" mt={4}>
               No samples found matching "{searchTerm}"
             </Text>
           )}
 
           {samples.length === 0 && (
-            <Text fontSize="sm" color="gray.500" textAlign="center" mt={4}>
+            <Text fontSize="sm" color={textMuted} textAlign="center" mt={4}>
               No sample files uploaded yet
             </Text>
           )}
