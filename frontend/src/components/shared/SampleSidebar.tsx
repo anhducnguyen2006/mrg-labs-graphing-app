@@ -159,12 +159,13 @@ const SampleSidebar: React.FC<Props> = ({
       p={4}
       display="flex"
       flexDirection="column"
+      overflow="hidden"
     >
-      <VStack align="start" spacing={4} flex={1} h="100%">
+      <VStack align="start" spacing={4} flex={1} h="100%" overflow="hidden">
         {/* Sample Files Section */}
         <Text fontSize="lg" fontWeight="bold">Sample Files</Text>
 
-        {/* Critical Samples Alert - Collapsible */}
+        {/* Critical Samples Alert - Collapsible with clickable samples */}
         <Box w="100%">
           <HStack justify="space-between" align="center" mb={2}>
             <Text fontSize="md" fontWeight="semibold" color="red.600">
@@ -180,10 +181,45 @@ const SampleSidebar: React.FC<Props> = ({
           </HStack>
           <Collapse in={isAlertsOpen} animateOpacity>
             <Box p={3} bg="red.50" borderRadius="md">
-              <Text fontSize="sm" color="red.800">
-                {criticalCount > 0 && `⚠️ ${criticalCount} critical sample${criticalCount > 1 ? 's' : ''} detected`}
-                {criticalCount === 0 && '✓ No critical samples'}
-              </Text>
+              {criticalCount === 0 ? (
+                <Text fontSize="sm" color="green.700">
+                  ✓ No critical samples
+                </Text>
+              ) : (
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="xs" fontWeight="semibold" color="red.800">
+                    ⚠️ {criticalCount} critical sample{criticalCount > 1 ? 's' : ''} detected
+                  </Text>
+                  <VStack align="start" spacing={1} w="100%" maxH="150px" overflowY="auto">
+                    {samples
+                      .filter(s => {
+                        const score = sampleScores[s.filename];
+                        return score !== undefined && score < 70;
+                      })
+                      .sort((a, b) => (sampleScores[a.filename] || 0) - (sampleScores[b.filename] || 0))
+                      .map(sample => (
+                        <Button
+                          key={sample.filename}
+                          size="xs"
+                          variant="ghost"
+                          w="100%"
+                          justifyContent="space-between"
+                          onClick={() => onSelectSample(sample.filename)}
+                          bg={selectedSampleName === sample.filename ? 'red.100' : 'white'}
+                          _hover={{ bg: 'red.100' }}
+                          px={2}
+                        >
+                          <Text fontSize="xs" noOfLines={1} flex={1} textAlign="left">
+                            {sample.filename}
+                          </Text>
+                          <Badge colorScheme="red" fontSize="xs" ml={1}>
+                            {Math.round(sampleScores[sample.filename] || 0)}
+                          </Badge>
+                        </Button>
+                      ))}
+                  </VStack>
+                </VStack>
+              )}
             </Box>
           </Collapse>
         </Box>
@@ -224,50 +260,62 @@ const SampleSidebar: React.FC<Props> = ({
           </HStack>
           <Collapse in={isFiltersOpen} animateOpacity>
             <VStack w="100%" spacing={3}>
-              {/* Filter Controls */}
+              {/* Filter Controls - Stacked Layout */}
               {sampleScores && Object.keys(sampleScores).length > 0 && (
                 <Box w="100%">
                   <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={2}>
                     Anomaly Filter
                   </Text>
-                  <HStack spacing={2} w="100%">
+                  <VStack spacing={2} w="100%">
                     <Button
-                      size="xs"
+                      size="sm"
                       leftIcon={<Box w={2} h={2} bg="green.500" borderRadius="full" />}
                       variant={filterBy === 'green' ? 'solid' : 'outline'}
                       colorScheme={filterBy === 'green' ? 'green' : 'gray'}
                       onClick={() => setFilterBy(filterBy === 'green' ? 'all' : 'green')}
-                      flex={1}
-                      fontSize="xs"
+                      w="100%"
+                      justifyContent="space-between"
+                      fontSize="sm"
                     >
-                      Good ({samples.filter(s => sampleScores[s.filename] >= 90).length})
+                      <Text>Good</Text>
+                      <Badge ml={2} colorScheme="green">
+                        {samples.filter(s => sampleScores[s.filename] >= 90).length}
+                      </Badge>
                     </Button>
                     <Button
-                      size="xs"
+                      size="sm"
                       leftIcon={<Box w={2} h={2} bg="yellow.500" borderRadius="full" />}
                       variant={filterBy === 'yellow' ? 'solid' : 'outline'}
                       colorScheme={filterBy === 'yellow' ? 'yellow' : 'gray'}
                       onClick={() => setFilterBy(filterBy === 'yellow' ? 'all' : 'yellow')}
-                      flex={1}
-                      fontSize="xs"
+                      w="100%"
+                      justifyContent="space-between"
+                      fontSize="sm"
                     >
-                      Warning ({samples.filter(s => {
-                        const score = sampleScores[s.filename];
-                        return score >= 70 && score < 90;
-                      }).length})
+                      <Text>Warning</Text>
+                      <Badge ml={2} colorScheme="yellow">
+                        {samples.filter(s => {
+                          const score = sampleScores[s.filename];
+                          return score >= 70 && score < 90;
+                        }).length}
+                      </Badge>
                     </Button>
                     <Button
-                      size="xs"
+                      size="sm"
                       leftIcon={<Box w={2} h={2} bg="red.500" borderRadius="full" />}
                       variant={filterBy === 'red' ? 'solid' : 'outline'}
                       colorScheme={filterBy === 'red' ? 'red' : 'gray'}
                       onClick={() => setFilterBy(filterBy === 'red' ? 'all' : 'red')}
-                      flex={1}
-                      fontSize="xs"
+                      w="100%"
+                      justifyContent="space-between"
+                      fontSize="sm"
                     >
-                      Critical ({samples.filter(s => sampleScores[s.filename] < 70).length})
+                      <Text>Critical</Text>
+                      <Badge ml={2} colorScheme="red">
+                        {samples.filter(s => sampleScores[s.filename] < 70).length}
+                      </Badge>
                     </Button>
-                  </HStack>
+                  </VStack>
                 </Box>
               )}
 
@@ -413,7 +461,7 @@ const SampleSidebar: React.FC<Props> = ({
 
         {/* Results Summary */}
         {samples.length > 0 && (
-          <Flex justify="space-between" align="center" w="100%" px={1}>
+          <Flex justify="space-between" align="center" w="100%" px={1} flexShrink={0}>
             <Text fontSize="xs" color="gray.500">
               {filteredAndSortedSamples.length} of {samples.length} files
               {searchTerm && ` matching "${searchTerm}"`}
@@ -426,7 +474,8 @@ const SampleSidebar: React.FC<Props> = ({
           </Flex>
         )}
 
-        <Box w="100%" flex={1} overflowY="auto" minH={0}>
+        {/* Sample List - Scrollable with remaining space */}
+        <Box w="100%" flex={1} overflowY="auto" minH={0} maxH="100%">
           <List spacing={2}>
             {filteredAndSortedSamples.map((sample, index) => (
               <ListItem key={sample.filename}>
