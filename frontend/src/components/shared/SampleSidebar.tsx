@@ -175,21 +175,20 @@ const SampleSidebar: React.FC<Props> = ({
   return (
     <Box
       w="300px"
-      h="100vh"
+      h="100%"
       bg={bgSidebar}
       borderRight="1px"
       borderColor={borderColor}
-      p={4}
       display="flex"
       flexDirection="column"
-      overflow="hidden"
+      p={4}
     >
-      <VStack align="start" spacing={4} flex={1} h="100%" overflow="hidden">
+      <VStack align="start" spacing={4} flex={1} minH={0}>
         {/* Sample Files Section */}
-        <Text fontSize="lg" fontWeight="bold" color={textPrimary}>Sample Files</Text>
+        <Text fontSize="lg" fontWeight="bold" color={textPrimary} flexShrink={0}>Sample Files</Text>
 
         {/* Critical Samples Alert - Collapsible with clickable samples */}
-        <Box w="100%">
+        <Box w="100%" flexShrink={0}>
           <HStack justify="space-between" align="center" mb={2}>
             <Text fontSize="md" fontWeight="semibold" color={useColorModeValue('red.600', 'red.400')}>
               🚨 Critical Alerts
@@ -248,7 +247,7 @@ const SampleSidebar: React.FC<Props> = ({
         </Box>
 
         {/* Search and Filters - Always visible */}
-        <InputGroup>
+        <InputGroup flexShrink={0}>
           <InputLeftElement pointerEvents="none">
             <SearchIcon color={searchIconColor} />
           </InputLeftElement>
@@ -268,7 +267,7 @@ const SampleSidebar: React.FC<Props> = ({
         </InputGroup>
 
         {/* Collapsible Filter Controls */}
-        <Box w="100%">
+        <Box w="100%" flexShrink={0}>
           <HStack justify="space-between" align="center" mb={2}>
             <Text fontSize="sm" fontWeight="semibold" color={textPrimary}>
               Filters & Sort
@@ -498,8 +497,8 @@ const SampleSidebar: React.FC<Props> = ({
         )}
 
         {/* Sample List - Scrollable with remaining space */}
-        <Box w="100%" flex={1} overflowY="auto" minH={0} maxH="100%">
-          <List spacing={2}>
+        <Box w="100%" flex={1} overflowY="auto" minH={0}>
+          <List spacing={2} pb={4}>
             {filteredAndSortedSamples.map((sample, index) => (
               <ListItem key={sample.filename}>
                 <HStack

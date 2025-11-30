@@ -50,7 +50,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             />
 
             {/* Main content area with sidebar */}
-            <Flex flex={1} position="relative" overflow="hidden" bg={useColorModeValue('gray.50', 'gray.900')}>
+            <Flex flex={1} position="relative" overflow="hidden" bg={useColorModeValue('gray.50', 'gray.900')} h="0">
                 {/* Sidebar - Desktop: slides in/out, Mobile: overlay */}
                 {isMobile ? (
                     // Mobile: Absolute positioned overlay
@@ -70,7 +70,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                     left={0}
                                     top={0}
                                     w={`${sidebarWidth}px`}
-                                    h="full"
+                                    h="100%"
                                     zIndex={999}
                                     boxShadow="2xl"
                                 >
@@ -106,10 +106,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             ease: [0.4, 0, 0.2, 1]
                         }}
                         position="relative"
-                        h="full"
+                        h="100%"
                         overflow="hidden"
+                        flexShrink={0}
                     >
-                        <Box w={`${sidebarWidth}px`} h="full">
+                        <Box w={`${sidebarWidth}px`} h="100%">
                             {sidebar}
                         </Box>
                     </MotionBox>
