@@ -161,8 +161,8 @@ const GraphPreview: React.FC<Props> = ({
           // For Pure Pearson: show absolute difference from baseline (deviation magnitude)
           baseDeviation = Math.abs(selectedSampleDiff.delta[idx]);
         } else if (scoringMethod === 'area') {
-          // For Area: show absolute difference weighted by position
-          baseDeviation = Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]);
+          // For Area: show absolute difference from baseline (same as actual score calculation)
+          baseDeviation = Math.abs(selectedSampleDiff.delta[idx]);
         }
         
         // Apply abnormality weight for this wavelength
