@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
+import { Box, Flex, useBreakpointValue, useColorModeValue } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import { User } from '../../services/auth';
@@ -30,14 +30,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     // On mobile, sidebar should be an overlay; on desktop, it should push content
     const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
 
-    const sidebarWidth = 300;
+    const sidebarWidth = 300; // Increased to accommodate 3-digit scores
 
     const handleToggleSidebar = () => {
         setIsSidebarOpen(prev => !prev);
     };
 
     return (
-        <Flex direction="column" h="100vh" overflow="hidden">
+        <Flex direction="column" h="100vh" overflow="hidden" bg={useColorModeValue('gray.50', 'gray.900')}>
             {/* Navbar */}
             <Navbar
                 isSidebarOpen={isSidebarOpen}
@@ -50,7 +50,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             />
 
             {/* Main content area with sidebar */}
-            <Flex flex={1} position="relative" overflow="hidden">
+            <Flex flex={1} position="relative" overflow="hidden" bg={useColorModeValue('gray.50', 'gray.900')}>
                 {/* Sidebar - Desktop: slides in/out, Mobile: overlay */}
                 {isMobile ? (
                     // Mobile: Absolute positioned overlay
@@ -116,7 +116,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 )}
 
                 {/* Main content */}
-                <Box flex={1} overflowY="auto">
+                <Box flex={1} overflowY="auto" bg={useColorModeValue('gray.50', 'gray.900')}>
                     {children}
                 </Box>
             </Flex>

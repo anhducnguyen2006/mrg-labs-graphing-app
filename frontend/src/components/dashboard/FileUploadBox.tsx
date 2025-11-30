@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Papa, { ParseResult } from 'papaparse';
-import { Box, Text, Input, VStack, HStack, Tag, Button, IconButton, Collapse, useDisclosure } from '@chakra-ui/react';
+import { Box, Text, Input, VStack, HStack, Tag, Button, IconButton, Collapse, useDisclosure, useColorModeValue } from '@chakra-ui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { ParsedCSV } from '../../types';
 
@@ -137,15 +137,30 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
     processFiles(e.dataTransfer.files);
   };
 
+  const bgDefault = useColorModeValue('white', 'gray.800');
+  const bgDragOver = acceptBaseline 
+    ? useColorModeValue('green.50', 'green.900') 
+    : useColorModeValue('blue.50', 'blue.900');
+  const borderColorDefault = acceptBaseline 
+    ? useColorModeValue('green.400', 'green.600')
+    : useColorModeValue('blue.400', 'blue.600');
+  const borderColorDragOver = acceptBaseline
+    ? useColorModeValue('green.600', 'green.400')
+    : useColorModeValue('blue.600', 'blue.400');
+  const textMuted = useColorModeValue('gray.600', 'gray.400');
+  const textDragOver = acceptBaseline
+    ? useColorModeValue('green.600', 'green.300')
+    : useColorModeValue('blue.600', 'blue.300');
+
   return (
     <Box 
       borderWidth="2px" 
-      borderColor={isDragOver ? (acceptBaseline ? 'green.600' : 'blue.600') : (acceptBaseline ? 'green.400' : 'blue.400')}
+      borderColor={isDragOver ? borderColorDragOver : borderColorDefault}
       borderStyle={isDragOver ? 'solid' : 'dashed'}
       p={4} 
       rounded="md" 
       w="100%" 
-      bg={isDragOver ? (acceptBaseline ? 'green.50' : 'blue.50') : 'white'} 
+      bg={isDragOver ? bgDragOver : bgDefault} 
       shadow="sm"
       transition="all 0.2s"
       onDragOver={handleDragOver}
@@ -154,11 +169,11 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
       position="relative"
     >
       <VStack align="start" spacing={3}>
-        <HStack justify="space-between" w="100%">
+            <HStack justify="space-between" w="100%">
           <HStack>
             <Text fontWeight="bold">{label}</Text>
             {multiple && fileNames.length > 0 && (
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize="sm" color={textMuted}>
                 ({fileNames.length} file{fileNames.length !== 1 ? 's' : ''})
               </Text>
             )}
@@ -176,7 +191,7 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
           <VStack align="start" spacing={3} w="100%">
             <Input ref={fileInputRef} type="file" multiple={multiple} accept=".csv" onChange={handleChange} />
             {!fileNames.length && (
-              <Text fontSize="sm" color="gray.500" textAlign="center">
+              <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')} textAlign="center">
                 Drag and drop CSV files here, or use the button above to select files
               </Text>
             )}
@@ -189,9 +204,9 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
             left="0"
             right="0"
             bottom="0"
-            bg={acceptBaseline ? 'green.100' : 'blue.100'}
+            bg={acceptBaseline ? useColorModeValue('green.100', 'green.800') : useColorModeValue('blue.100', 'blue.800')}
             border="2px dashed"
-            borderColor={acceptBaseline ? 'green.500' : 'blue.500'}
+            borderColor={acceptBaseline ? useColorModeValue('green.500', 'green.400') : useColorModeValue('blue.500', 'blue.400')}
             borderRadius="md"
             display="flex"
             alignItems="center"
@@ -201,7 +216,7 @@ const FileUploadBox: React.FC<Props> = ({ label, multiple = false, onFilesParsed
             <Text
               fontSize="lg"
               fontWeight="bold"
-              color={acceptBaseline ? 'green.600' : 'blue.600'}
+              color={textDragOver}
             >
               📁 Drop CSV files here
             </Text>

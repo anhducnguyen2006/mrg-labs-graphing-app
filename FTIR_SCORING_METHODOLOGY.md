@@ -140,18 +140,30 @@ Score = max(0, min(100, Base Score - Pearson Penalty))
 
 ### Method 3: Area Difference / Integral Difference (Default)
 
-**Purpose**: Total magnitude of deviation across entire spectrum
+**Purpose**: Total magnitude of deviation across entire spectrum using trapezoidal integration
 
-**Formula**:
+**Score Calculation Formula**:
 ```
-Area = Σ(w_i × |Δx_i| × (|δy_i| + |δy_(i+1)|)/2)
+Total Weighted Area = Σ(w_i × |Δx_i| × (|δy_i| + |δy_(i+1)|)/2)
 
 Where:
-- Δx_i = wavelength interval width
-- δy_i = absorbance difference at point i
-- w_i = weight for region
+- δy_i = baseline_i - sample_i (absorbance difference at point i)
+- Δx_i = wavelength interval width (x_(i+1) - x_i)
+- w_i = (weight_i + weight_(i+1)) / 2 (average weight for interval)
 - Trapezoidal integration of absolute differences
 ```
+
+**Heatmap Visualization**:
+```
+Heatmap Deviation = w × |δy|
+
+Where:
+- δy = baseline - sample (direct absorbance difference)
+- w = weight for wavelength region
+- Shows point-by-point weighted deviations (same as used in score calculation)
+```
+
+**Note**: The heatmap displays the same `|δy|` values used in the trapezoidal integration, weighted by spectral region. This ensures the visual representation matches the scoring calculation exactly.
 
 **Scoring Thresholds**:
 - **Area ≤ 50**: Score 90-100 (Excellent) 🟢
@@ -164,8 +176,92 @@ Where:
 - Captures cumulative effect of all changes
 - Less sensitive to isolated spikes than RMSE
 - Good for overall "similarity" assessment
+- Direct measurement of baseline vs sample differences
 
 **Best for**: General comparison, catching widespread degradation
+
+**Example**:
+```
+Baseline:  [1.0, 1.5, 1.2] at wavelengths [1000, 1100, 1200]
+Sample:    [1.1, 1.7, 1.3]
+Delta:     [0.1, 0.2, 0.1] (baseline - sample)
+
+Heatmap shows: |0.1|, |0.2|, |0.1| weighted by region
+Score uses: Trapezoidal area of these same values
+
+When comparing baseline to itself:
+Delta:     [0.0, 0.0, 0.0]
+Heatmap:   All zeros (green/cool colors)
+Score:     100 (perfect match)
+```
+
+---
+
+## Heatmap Visualization Explained
+
+The deviation heatmap below each graph displays a color-coded bar showing how much each wavelength deviates from the baseline. **The heatmap visualization matches the scoring calculation** for consistency.
+
+### Heatmap Calculation by Method
+
+| Method | Heatmap Formula | What It Shows |
+|--------|----------------|---------------|
+| **RMSE** | `w × (baseline - sample)²` | Squared deviations (pre-sqrt), weighted by region |
+| **Hybrid** | `w × \|baseline - sample\|` | Absolute deviations, weighted by region |
+| **Pearson** | `w × \|baseline - sample\|` | Absolute deviations, weighted by region |
+| **Area** | `w × \|baseline - sample\|` | Absolute deviations (same as used in integration), weighted by region |
+
+### Color Interpretation
+
+- 🟢 **Green/Cool colors**: Low deviation (close to baseline)
+- 🟡 **Yellow/Warm colors**: Medium deviation (some changes detected)
+- 🔴 **Red/Hot colors**: High deviation (significant changes)
+
+### Key Points
+
+1. **All methods use direct baseline-sample comparison** in the heatmap
+   - No comparison to "average of all samples"
+   - Shows the actual `delta = baseline - sample` at each point
+
+2. **Weights amplify critical regions**
+   - Oxidation zone (1800-1650 cm⁻¹) deviations appear more intense
+   - Lower-priority regions appear less intense
+   - This matches how weights affect the final score
+
+3. **Consistency check**
+   - If you compare baseline to itself, heatmap should be all green (zero deviation)
+   - If score is 100, heatmap should show minimal color intensity
+   - If score is low, heatmap should show red/hot regions
+
+### Example: Baseline vs Baseline
+
+When selecting the baseline file itself:
+```
+Delta at all points: 0.0 (baseline - baseline = 0)
+RMSE heatmap: 0² = 0 (all green)
+Hybrid heatmap: |0| = 0 (all green)
+Pearson heatmap: |0| = 0 (all green)
+Area heatmap: |0| = 0 (all green)
+
+All methods show score: 100
+```
+
+### Example: Oxidized Sample
+
+When comparing to an oxidized sample:
+```
+At oxidation zone (1700 cm⁻¹):
+  Baseline: 0.5 absorbance
+  Sample: 1.2 absorbance (oxidation peak growth)
+  Delta: -0.7
+  Weight: 200%
+
+RMSE heatmap: 200% × (-0.7)² = 98 → RED (high intensity)
+Hybrid heatmap: 200% × |-0.7| = 140 → RED (high intensity)
+Area heatmap: 200% × |-0.7| = 140 → RED (high intensity)
+
+All methods will show hot colors in oxidation zone
+Scores will be LOW (< 70) indicating oxidation detected
+```
 
 ---
 
@@ -233,11 +329,14 @@ const abnormalityWeights = [
 
 ## Method Comparison Summary
 
-| Method | Primary Metric | Best For | Limitation |
-|--------|---------------|----------|------------|
-| **RMSE** | Intensity deviation | Oxidation detection | Sensitive to noise |
-| **Hybrid** ⭐ | RMSE + Shape check | Comprehensive analysis | More complex |
-| **Area** | Total integrated difference | Overall similarity | Less sensitive to localized changes |
+| Method | Primary Metric | Heatmap Shows | Best For | Limitation |
+|--------|---------------|---------------|----------|------------|
+| **RMSE** | Squared deviation | w × (δ)² | Oxidation detection | Sensitive to noise |
+| **Hybrid** ⭐ | RMSE + Shape check | w × \|δ\| | Comprehensive analysis | More complex |
+| **Pearson** | Correlation | w × \|δ\| | Shape similarity | Ignores magnitude |
+| **Area** | Integrated difference | w × \|δ\| | Overall similarity | Less sensitive to localized changes |
+
+**Note**: δ = baseline - sample (deviation), w = spectral region weight
 
 ---
 

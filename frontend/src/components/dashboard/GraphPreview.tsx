@@ -1,5 +1,5 @@
 import React, { useRef, useMemo } from 'react';
-import { Box, VStack, Text, HStack, Button, Icon } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, Button, Icon, useColorModeValue, useColorMode } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon, RepeatIcon } from '@chakra-ui/icons';
 import { ParsedCSV } from '../../types';
 import DeviationHeatBar from '../shared/DeviationHeatBar';
@@ -63,6 +63,9 @@ const GraphPreview: React.FC<Props> = ({
   const differenceChartRef = useRef<any>(null);
   const sample = samples.find((s: ParsedCSV) => s.filename === selectedSampleName) || samples[0];
   const hasData = baseline && sample;
+  
+  // Color mode support
+  const { colorMode } = useColorMode();
   
   // Track whether to use custom mixed intervals or uniform 250 intervals
   const useCustomIntervals = useRef(true);
@@ -158,8 +161,8 @@ const GraphPreview: React.FC<Props> = ({
           // For Pure Pearson: show absolute difference from baseline (deviation magnitude)
           baseDeviation = Math.abs(selectedSampleDiff.delta[idx]);
         } else if (scoringMethod === 'area') {
-          // For Area: show absolute difference weighted by position
-          baseDeviation = Math.abs(selectedSampleDiff.delta[idx] - avgDelta[i]);
+          // For Area: show absolute difference from baseline (same as actual score calculation)
+          baseDeviation = Math.abs(selectedSampleDiff.delta[idx]);
         }
         
         // Apply abnormality weight for this wavelength
@@ -544,33 +547,23 @@ const GraphPreview: React.FC<Props> = ({
     };
   })() : undefined;
 
-  return (
-    <Box w="100%">
-      <VStack align="start" spacing={4}>
-        {hasData && (
-          <HStack justify="space-between" w="100%" mb={4}>
-            <Text fontSize="2xl" fontWeight="bold">FTIR Graph Analysis</Text>
-            <HStack spacing={2}>
-              <Button size="sm" onClick={handleToggleGrid} variant="outline" leftIcon={showGrid ? <ViewOffIcon /> : <ViewIcon />}>
-                {showGrid ? 'Hide Grid' : 'Show Grid'}
-              </Button>
-              <Button size="sm" onClick={handleResetZoom} variant="outline" leftIcon={<RepeatIcon />}>
-                Reset Zoom
-              </Button>
-            </HStack>
-          </HStack>
-        )}
-
-        {/* Main Spectroscopy Graph */}
-        {hasData ? (
-          <Box w="100%" h="500px" bg="white" p={12} borderWidth="1px" borderColor="gray.200" rounded="lg" shadow="sm">
-              <Line key={resetKey} ref={chartRef} data={data!} options={{
+  // Memoize chart options based on color mode, showGrid, and other dependencies
+  const chartOptions = useMemo(() => {
+    const isDark = colorMode === 'dark';
+    const titleColor = isDark ? '#e0e0e0' : '#333';
+    const gridColor = isDark ? '#4a5568' : '#e0e0e0';
+    const tickColor = isDark ? '#cbd5e0' : '#666';
+    const legendColor = isDark ? '#e0e0e0' : '#333';
+    
+    return {
               responsive: true,
               maintainAspectRatio: false,
+              backgroundColor: isDark ? 'transparent' : 'white',
+              color: titleColor,
               animation: {
                 duration: 300,
-                easing: 'easeInOutQuart',
-                delay: (context) => {
+                easing: 'easeInOutQuart' as const,
+                delay: (context: any) => {
                   let delay = 0;
                   if (context.type === 'data' && context.mode === 'default') {
                     delay = context.dataIndex * 0.5;
@@ -592,27 +585,27 @@ const GraphPreview: React.FC<Props> = ({
               },
               interaction: {
                 intersect: false,
-                mode: 'index'
+                mode: 'index' as const
               },
               scales: {
                 x: {
-                  type: 'linear',
+                  type: 'linear' as const,
                   title: { 
                     display: true, 
                     text: 'Wavenumber (cm⁻¹)',
-                    font: { size: 14, weight: 'bold' },
-                    color: '#333'
+                    font: { size: 14, weight: 'bold' as const },
+                    color: titleColor
                   },
                   min: 4000,
                   max: 550,
                   reverse: true,
                   grid: {
                     display: showGrid,  // Toggle grid lines
-                    color: '#e0e0e0',
+                    color: gridColor,
                     lineWidth: 0.5
                   },
                   ticks: {
-                    color: '#666',
+                    color: tickColor,
                     font: { size: 12 },
                     autoSkip: true,
                     maxTicksLimit: 15,
@@ -629,22 +622,22 @@ const GraphPreview: React.FC<Props> = ({
                   }
                 },
                 y: {
-                  type: 'linear',
+                  type: 'linear' as const,
                   title: { 
                     display: true, 
                     text: 'Absorbance',
-                    font: { size: 14, weight: 'bold' },
-                    color: '#333'
+                    font: { size: 14, weight: 'bold' as const },
+                    color: titleColor
                   },
                   min: 0,
                   max: getYMax(), // Rounded to nearest 0.5 above actual max
                   grid: {
                     display: showGrid,  // Toggle grid lines
-                    color: '#e0e0e0',
+                    color: gridColor,
                     lineWidth: 0.5
                   },
                   ticks: {
-                    color: '#666',
+                    color: tickColor,
                     font: { size: 12 },
                     stepSize: 0.5, // Interval of 0.5
                     callback: function(value) {
@@ -676,12 +669,12 @@ const GraphPreview: React.FC<Props> = ({
                   }
                 },
                 legend: { 
-                  position: 'bottom',
+                  position: 'bottom' as const,
                   display: true,
-                  align: 'end',
+                  align: 'end' as const,
                   labels: {
                     font: { size: 12 },
-                    color: '#333',
+                    color: legendColor,
                     usePointStyle: true,  // Use circular point style
                     pointStyle: 'circle',
                     padding: 15,
@@ -696,10 +689,11 @@ const GraphPreview: React.FC<Props> = ({
                           // If visible, fill with dataset color; if hidden, transparent (empty box)
                           fillStyle: isVisible ? (dataset.borderColor as string) : 'rgba(0,0,0,0)',
                           // If visible, border uses dataset color; if hidden, black border
-                          strokeStyle: isVisible ? (dataset.borderColor as string) : '#000',
+                          strokeStyle: isVisible ? (dataset.borderColor as string) : (isDark ? '#fff' : '#000'),
                           lineWidth: 2,  // Border thickness
                           hidden: false,  // Never hide the legend item itself
-                          datasetIndex: i
+                          datasetIndex: i,
+                          fontColor: legendColor  // Add explicit text color for legend items
                         };
                       });
                     }
@@ -726,7 +720,7 @@ const GraphPreview: React.FC<Props> = ({
                     pinch: {
                       enabled: true
                     },
-                    mode: 'xy',
+                    mode: 'xy' as const,
                     onZoomStart: () => {
                       // Mark as zoomed mode
                       isZoomedMode.current = true;
@@ -739,7 +733,7 @@ const GraphPreview: React.FC<Props> = ({
                   },
                   pan: {
                     enabled: true,
-                    mode: 'xy',
+                    mode: 'xy' as const,
                     onPanStart: () => {
                       // Mark as zoomed mode
                       isZoomedMode.current = true;
@@ -756,10 +750,33 @@ const GraphPreview: React.FC<Props> = ({
                   }
                 }
               }
-            }} />
+            };
+  }, [colorMode, showGrid, getYMax]);
+
+  return (
+    <Box w="100%">
+      <VStack align="start" spacing={4}>
+        {hasData && (
+          <HStack justify="space-between" w="100%" mb={4}>
+            <Text fontSize="2xl" fontWeight="bold">FTIR Graph Analysis</Text>
+            <HStack spacing={2}>
+              <Button size="sm" onClick={handleToggleGrid} variant="outline" leftIcon={showGrid ? <ViewOffIcon /> : <ViewIcon />}>
+                {showGrid ? 'Hide Grid' : 'Show Grid'}
+              </Button>
+              <Button size="sm" onClick={handleResetZoom} variant="outline" leftIcon={<RepeatIcon />}>
+                Reset Zoom
+              </Button>
+            </HStack>
+          </HStack>
+        )}
+
+        {/* Main Spectroscopy Graph */}
+        {hasData ? (
+          <Box w="100%" h="500px" bg={useColorModeValue('white', 'gray.800')} p={12} borderWidth="1px" borderColor={useColorModeValue('gray.200', 'gray.700')} rounded="lg" shadow="sm">
+              <Line key={`${resetKey}-${colorMode}`} ref={chartRef} data={data!} options={chartOptions} />
           </Box>
         ) : (
-          <Text fontSize="sm" color="gray.500">Upload baseline and at least one sample to see preview.</Text>
+          <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>Upload baseline and at least one sample to see preview.</Text>
         )}
         
         {/* Deviation Heat Bar - Shows oxidation intensity */}

@@ -16,6 +16,7 @@ import {
     NumberInputStepper,
     NumberIncrementStepper,
     NumberDecrementStepper,
+    useColorModeValue,
 } from '@chakra-ui/react';
 
 export interface RangeWeight {
@@ -33,7 +34,6 @@ interface Props {
     initialWeights?: RangeWeight[];
 }
 
-const handleColors = ["black", "gray.700", "gray.500", "gray.300"];
 const labels = ["Starting", "Evaporation", "Other", "Oxidation"];
 
 const AbnormalityWeightDialog: React.FC<Props> = ({
@@ -48,6 +48,19 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
     const [weightInputs, setWeightInputs] = useState<string[]>(["10", "20", "10", "60"]);
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const trackRef = useRef<HTMLDivElement>(null);
+
+    // Color mode values
+    const trackBg = useColorModeValue('gray.200', 'gray.700');
+    const regionBg = useColorModeValue('white', 'gray.800');
+    const textColor = useColorModeValue('gray.800', 'gray.100');
+    
+    // Handle colors adapt to dark mode
+    const handleColors = [
+        useColorModeValue("black", "gray.100"),
+        useColorModeValue("gray.700", "gray.400"),
+        useColorModeValue("gray.500", "gray.500"),
+        useColorModeValue("gray.300", "gray.600")
+    ];
 
     const MIN = 550;
     const MAX = 4000;
@@ -195,7 +208,7 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
                             ref={trackRef}
                             position="relative"
                             h="8px"
-                            bg="gray.200"
+                            bg={trackBg}
                             borderRadius="full"
                             cursor="pointer"
                             userSelect="none"
@@ -227,7 +240,7 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
                         </Box>
 
                         {/* Range labels */}
-                        <Flex justify="space-between" mt={2} fontSize="xs" color="gray.500">
+                        <Flex justify="space-between" mt={2} fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
                             <Text>{MAX}</Text>
                             <Text>{MIN}</Text>
                         </Flex>
@@ -242,7 +255,7 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
                                 if (inputStr === '') return 'orange.300';
                                 const n = parseInt(inputStr, 10);
                                 if (isNaN(n) || n < 1 || n > 97) return 'red.400';
-                                return 'gray.200';
+                                return useColorModeValue('gray.200', 'gray.600');
                             })();
 
                             return (
@@ -250,23 +263,23 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
                                     key={index}
                                     mb={3}
                                     p={4}
-                                    bg="white"
+                                    bg={regionBg}
                                     border="1px"
-                                    borderColor="gray.200"
+                                    borderColor={useColorModeValue('gray.200', 'gray.600')}
                                     borderRadius="lg"
                                 >
                                     <Flex align="center" justify="space-between" gap={4}>
                                         <Box flex={1}>
                                             <Flex align="center" gap={2} mb={2}>
                                                 <Box w="12px" h="12px" borderRadius="full" bg={handleColors[index]} />
-                                                <Text fontWeight="semibold">{label}</Text>
+                                                <Text fontWeight="semibold" color={textColor}>{label}</Text>
                                             </Flex>
-                                            <Text fontSize="xs" color="gray.500">
+                                            <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
                                                 Range: {rangeStart} → {rangeEnd} cm⁻¹
                                             </Text>
                                         </Box>
                                         <Box>
-                                            <Text fontSize="xs" fontWeight="medium" color="gray.500" mb={1}>
+                                            <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('gray.500', 'gray.400')} mb={1}>
                                                 Weight
                                             </Text>
                                             <NumberInput
@@ -330,14 +343,14 @@ const AbnormalityWeightDialog: React.FC<Props> = ({
                         p={4}
                         borderRadius="lg"
                         border="1px"
-                        borderColor={isValid ? 'gray.200' : 'red.400'}
-                        bg="white"
+                        borderColor={isValid ? useColorModeValue('gray.200', 'gray.600') : 'red.400'}
+                        bg={regionBg}
                     >
                         <Flex justify="space-between" align="center">
-                            <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                            <Text fontSize="sm" fontWeight="medium" color={useColorModeValue('gray.600', 'gray.400')}>
                                 Total Weight:
                             </Text>
-                            <Text fontSize="lg" fontWeight="bold" color={isValid ? 'black' : 'red.500'}>
+                            <Text fontSize="lg" fontWeight="bold" color={isValid ? textColor : 'red.500'}>
                                 {totalWeight} / 100
                                 {!isValid && ' ⚠'}
                             </Text>

@@ -20,10 +20,12 @@ import {
     AlertDescription,
     FormHelperText,
     Progress,
+    useColorModeValue,
 } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon, CheckIcon } from '@chakra-ui/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import ColorModeToggle from '../shared/ColorModeToggle';
 
 const Signup: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -121,15 +123,20 @@ const Signup: React.FC = () => {
     };
 
     return (
-        <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
+        <Box minH="100vh" bg={useColorModeValue('gray.50', 'gray.900')} display="flex" alignItems="center" justifyContent="center" position="relative">
+            {/* Color Mode Toggle - Top Right */}
+            <Box position="absolute" top={4} right={4}>
+                <ColorModeToggle />
+            </Box>
+
             <Container maxW="md" py={12}>
-                <VStack spacing={8} bg="white" p={8} borderRadius="lg" boxShadow="xl">
+                <VStack spacing={8} bg={useColorModeValue('white', 'gray.800')} p={8} borderRadius="lg" boxShadow="xl">
                     {/* Logo/Header */}
                     <VStack spacing={2}>
-                        <Heading size="xl" color="blue.600">
+                        <Heading size="xl" color={useColorModeValue('blue.600', 'blue.400')}>
                             MRG Labs
                         </Heading>
-                        <Text color="gray.600" fontSize="lg">
+                        <Text color={useColorModeValue('gray.600', 'gray.400')} fontSize="lg">
                             Graphing Application
                         </Text>
                     </VStack>
@@ -244,9 +251,9 @@ const Signup: React.FC = () => {
                     </Box>
 
                     {/* Login Link */}
-                    <Text color="gray.600" fontSize="sm">
+                    <Text color={useColorModeValue('gray.600', 'gray.400')} fontSize="sm">
                         Already have an account?{' '}
-                        <ChakraLink as={Link} to="/login" color="blue.600" fontWeight="semibold">
+                        <ChakraLink as={Link} to="/login" color={useColorModeValue('blue.600', 'blue.400')} fontWeight="semibold">
                             Sign In
                         </ChakraLink>
                     </Text>

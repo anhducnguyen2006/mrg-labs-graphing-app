@@ -21,6 +21,7 @@ import {
     AlertIcon,
     AlertDescription,
     Progress,
+    useColorModeValue,
 } from '@chakra-ui/react';
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 import { changePassword } from '../../services/auth';
@@ -204,12 +205,12 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ isOpen, onC
                                             colorScheme={getStrengthColor(passwordStrength)}
                                             borderRadius="full"
                                         />
-                                        <Text fontSize="xs" color={`${getStrengthColor(passwordStrength)}.600`}>
+                                        <Text fontSize="xs" color={useColorModeValue(`${getStrengthColor(passwordStrength)}.600`, `${getStrengthColor(passwordStrength)}.400`)}>
                                             Password strength: {getStrengthText(passwordStrength)}
                                         </Text>
                                     </VStack>
                                 )}
-                                <Text fontSize="xs" color="gray.500" mt={1}>
+                                <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1}>
                                     Must be at least 6 characters
                                 </Text>
                             </FormControl>
@@ -234,7 +235,7 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ isOpen, onC
                                     </InputRightElement>
                                 </InputGroup>
                                 {confirmPassword && newPassword !== confirmPassword && (
-                                    <Text fontSize="xs" color="red.500" mt={1}>
+                                    <Text fontSize="xs" color={useColorModeValue('red.500', 'red.400')} mt={1}>
                                         Passwords do not match
                                     </Text>
                                 )}
