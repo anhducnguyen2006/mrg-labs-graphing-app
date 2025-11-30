@@ -57,6 +57,10 @@ yarn-error.log*
 dist/
 build/
 
+# Test coverage
+coverage/
+.nyc_output/
+
 # Generated files
 backend/static/generated_graphs/
 

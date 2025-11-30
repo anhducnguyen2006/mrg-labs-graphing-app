@@ -184,77 +184,80 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl">
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent maxW="900px">
         <ModalHeader>Export Graphs</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={6} align="start">
-            {/* Format Selection */}
-            <Box w="100%">
-              <Text fontWeight="semibold" mb={2}>Export Format</Text>
-              <RadioGroup value={format} onChange={(value) => setFormat(value as 'png' | 'jpeg')}>
-                <HStack spacing={4}>
-                  <Radio value="png">PNG</Radio>
-                  <Radio value="jpeg">JPEG</Radio>
-                </HStack>
-              </RadioGroup>
-            </Box>
+        <ModalBody pb={6}>
+          <HStack spacing={6} align="start">
+            {/* Left Column - Settings */}
+            <VStack spacing={4} align="start" w="40%" minW="300px">
+              {/* Format Selection */}
+              <Box w="100%">
+                <Text fontWeight="semibold" mb={2} fontSize="sm">Export Format</Text>
+                <RadioGroup value={format} onChange={(value) => setFormat(value as 'png' | 'jpeg')}>
+                  <HStack spacing={4}>
+                    <Radio value="png">PNG</Radio>
+                    <Radio value="jpeg">JPEG</Radio>
+                  </HStack>
+                </RadioGroup>
+              </Box>
 
-            {/* Filename Input */}
-            <Box w="100%">
-              <Text fontWeight="semibold" mb={2}>Export Filename</Text>
-              <InputGroup>
-                <Input
-                  value={zipFilename}
-                  onChange={(e) => setZipFilename(e.target.value)}
-                  placeholder={defaultZipName}
-                  pr="50px"
-                />
-                <Box
-                  position="absolute"
-                  right="12px"
-                  top="50%"
-                  transform="translateY(-50%)"
-                  pointerEvents="none"
-                  color="gray.400"
-                  fontSize="sm"
-                >
-                  .zip
-                </Box>
-              </InputGroup>
-              <Text fontSize="xs" color="gray.500" mt={1}>
-                Default: {defaultZipName}.zip
-              </Text>
-            </Box>
+              {/* Filename Input */}
+              <Box w="100%">
+                <Text fontWeight="semibold" mb={2} fontSize="sm">Export Filename</Text>
+                <InputGroup size="sm">
+                  <Input
+                    value={zipFilename}
+                    onChange={(e) => setZipFilename(e.target.value)}
+                    placeholder={defaultZipName}
+                    pr="50px"
+                  />
+                  <Box
+                    position="absolute"
+                    right="12px"
+                    top="50%"
+                    transform="translateY(-50%)"
+                    pointerEvents="none"
+                    color="gray.400"
+                    fontSize="xs"
+                  >
+                    .zip
+                  </Box>
+                </InputGroup>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Default: {defaultZipName}.zip
+                </Text>
+              </Box>
 
-            {/* Download Info */}
-            <Box w="100%" p={3} bg="blue.50" borderRadius="md">
-              <Text fontSize="sm" color="blue.700">
-                💡 <strong>Export Options:</strong> Use "Export Graphs" to choose a custom folder (Chromium browsers only), or use standard "Export" for default Downloads folder.
-              </Text>
-            </Box>
+              {/* Download Info */}
+              <Box w="100%" p={3} bg="blue.50" borderRadius="md">
+                <Text fontSize="xs" color="blue.700">
+                  💡 <strong>Export Options:</strong> Use "Export Graphs" to choose a custom folder (Chromium browsers only), or use standard "Export" for default Downloads folder.
+                </Text>
+              </Box>
+            </VStack>
 
-            {/* Sample Selection */}
-            <Box w="100%">
-              <Text fontWeight="semibold" mb={2}>Select Samples to Export</Text>
+            {/* Right Column - Sample Selection */}
+            <Box w="60%" minW="400px">
+              <Text fontWeight="semibold" mb={2} fontSize="sm">Select Samples to Export</Text>
               
-              <HStack mb={3}>
-                <Button size="sm" onClick={handleSelectAll} variant="outline">
+              <HStack mb={2}>
+                <Button size="xs" onClick={handleSelectAll} variant="outline">
                   Select All
                 </Button>
-                <Button size="sm" onClick={handleClearAll} variant="outline">
+                <Button size="xs" onClick={handleClearAll} variant="outline">
                   Clear All
                 </Button>
-                <Text fontSize="sm" color="gray.600">
+                <Text fontSize="xs" color="gray.600">
                   {selectedSamples.length} of {samples.length} selected
                 </Text>
               </HStack>
 
-              <InputGroup mb={3}>
+              <InputGroup mb={2} size="sm">
                 <InputLeftElement pointerEvents="none">
-                  <SearchIcon color="gray.300" />
+                  <SearchIcon color="gray.300" boxSize={3} />
                 </InputLeftElement>
                 <Input
                   placeholder="Search samples..."
@@ -263,11 +266,11 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                 />
               </InputGroup>
 
-              <Box maxH="200px" overflowY="auto" border="1px" borderColor="gray.200" borderRadius="md" p={2}>
+              <Box maxH="300px" overflowY="auto" border="1px" borderColor="gray.200" borderRadius="md" p={2}>
                 <CheckboxGroup value={selectedSamples} onChange={(value) => setSelectedSamples(value as string[])}>
-                  <VStack align="start" spacing={2}>
+                  <VStack align="start" spacing={1}>
                     {filteredSamples.map((sample) => (
-                      <Checkbox key={sample.filename} value={sample.filename}>
+                      <Checkbox key={sample.filename} value={sample.filename} size="sm">
                         <Text fontSize="sm">{sample.filename}</Text>
                       </Checkbox>
                     ))}
@@ -281,7 +284,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                 )}
               </Box>
             </Box>
-          </VStack>
+          </HStack>
         </ModalBody>
 
         <ModalFooter>
