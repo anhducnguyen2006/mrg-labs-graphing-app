@@ -11,6 +11,7 @@ interface ExportModalProps {
   onClose: () => void;
   samples: Sample[];
   onExport: (config: ExportConfig) => void;
+  baselineFilename?: string;
 }
 
 interface ExportConfig {
@@ -19,6 +20,7 @@ interface ExportConfig {
   includeBaseline: boolean;
   includeHeatmap: boolean;
   includeStatistics: boolean;
+  zipFilename?: string;
 }
 
 type ExportPreset = 'all' | 'critical' | 'warning' | 'good' | 'custom';
@@ -28,7 +30,13 @@ const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
   samples,
   onExport,
+  baselineFilename,
 }) => {
+  // Get default filename from baseline (remove extension)
+  const defaultZipName = baselineFilename 
+    ? baselineFilename.replace(/\.[^/.]+$/, '') 
+    : 'exported_graphs';
+
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
   const [preset, setPreset] = useState<ExportPreset>('all');
   const [customSamples, setCustomSamples] = useState<string[]>([]);
@@ -37,6 +45,14 @@ const ExportModal: React.FC<ExportModalProps> = ({
   const [includeStatistics, setIncludeStatistics] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [zipFilename, setZipFilename] = useState(defaultZipName);
+
+  // Update zip filename when baseline changes or modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setZipFilename(defaultZipName);
+    }
+  }, [isOpen, defaultZipName]);
 
   if (!isOpen) return null;
 
@@ -133,6 +149,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
       includeBaseline,
       includeHeatmap,
       includeStatistics,
+      zipFilename: zipFilename.trim() || defaultZipName,
     };
 
     try {
@@ -404,6 +421,28 @@ const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
+          {/* Filename Input */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Export Filename:
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={zipFilename}
+                onChange={(e) => setZipFilename(e.target.value)}
+                placeholder={defaultZipName}
+                className="w-full p-2 pr-12 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+                .zip
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Default: {defaultZipName}.zip
+            </p>
+          </div>
+
           {/* Sample Selection */}
           <div className="mb-6 flex-1">
             <label className="block text-sm font-semibold text-gray-700 mb-2">Samples:</label>
@@ -477,6 +516,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 setIncludeBaseline(true);
                 setIncludeHeatmap(true);
                 setIncludeStatistics(false);
+                setZipFilename(defaultZipName);
               }}
               className="text-sm text-gray-600 hover:text-gray-800"
             >

@@ -272,11 +272,21 @@ async def generate_graphs(
     baseline: UploadFile = File(...),
     samples: List[UploadFile] = File(...),
     save_dir: str | None = Form(None),
-    format: str = Form("png")
+    format: str = Form("png"),
+    zip_filename: str | None = Form(None)
 ):
     try:
         # Generate the graphs and get their file paths
         saved_paths = generate_and_save(baseline, samples, save_subdir=save_dir, format=format)
+        
+        # Determine the zip filename
+        if zip_filename:
+            # Use provided filename, ensure it ends with .zip
+            final_filename = zip_filename if zip_filename.endswith('.zip') else f"{zip_filename}.zip"
+        else:
+            # Default to baseline name without extension
+            baseline_name = os.path.splitext(baseline.filename or 'export')[0]
+            final_filename = f"{baseline_name}.zip"
         
         # Create a temporary zip file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as temp_zip:
@@ -301,7 +311,7 @@ async def generate_graphs(
             
             return FileResponse(
                 path=temp_zip.name,
-                filename=f"exported_graphs.zip",
+                filename=final_filename,
                 media_type='application/zip',
                 background=cleanup_file
             )

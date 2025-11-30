@@ -199,6 +199,38 @@ export class FTIRApiService {
     const response = await api.get('/analysis/ftir/capabilities');
     return response.data;
   }
+
+  /**
+   * Export graphs as a zip file
+   */
+  static async exportGraphs(request: {
+    baseline: File;
+    samples: File[];
+    format: 'png' | 'jpeg';
+    saveDir?: string;
+    zipFilename?: string;
+  }): Promise<Blob> {
+    const formData = new FormData();
+    
+    formData.append('baseline', request.baseline);
+    request.samples.forEach(sample => formData.append('samples', sample));
+    formData.append('format', request.format);
+    
+    if (request.saveDir) {
+      formData.append('save_dir', request.saveDir);
+    }
+    
+    if (request.zipFilename) {
+      formData.append('zip_filename', request.zipFilename);
+    }
+
+    const response = await api.post('/generate_graphs', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      responseType: 'blob', // Important for binary data
+    });
+
+    return response.data;
+  }
 }
 
 // Export helper functions for common operations

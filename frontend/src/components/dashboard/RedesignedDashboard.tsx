@@ -106,11 +106,57 @@ const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
   const handleExportConfig = useCallback(async (config: any) => {
     try {
       console.log('Export config:', config);
+      
+      // Validate we have baseline and samples
+      if (!baselineFile) {
+        alert('Please upload a baseline file first');
+        return;
+      }
+
+      if (!sampleFiles || sampleFiles.length === 0) {
+        alert('Please upload sample files first');
+        return;
+      }
+
+      // Get selected sample files based on config
+      const selectedFiles = config.selectedSamples.map((filename: string) => {
+        return Array.from(sampleFiles).find(f => f.name === filename);
+      }).filter(Boolean) as File[];
+
+      if (selectedFiles.length === 0) {
+        alert('No valid samples selected for export');
+        return;
+      }
+
+      // Import the API service
+      const { FTIRApiService } = await import('../../services/ftirApi');
+
+      // Call export API
+      const blob = await FTIRApiService.exportGraphs({
+        baseline: baselineFile,
+        samples: selectedFiles,
+        format: config.format,
+        zipFilename: config.zipFilename,
+      });
+
+      // Download the blob
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = config.zipFilename ? 
+        (config.zipFilename.endsWith('.zip') ? config.zipFilename : `${config.zipFilename}.zip`) : 
+        'exported_graphs.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       setIsExportOpen(false);
     } catch (error) {
       console.error('Export failed:', error);
+      alert('Failed to export graphs. Please try again.');
     }
-  }, []);
+  }, [baselineFile, sampleFiles]);
 
   const handleScoringMethodChange = useCallback((method: ScoringMethod) => {
     setScoringMethod(method);
@@ -362,6 +408,7 @@ const RedesignedDashboard: React.FC<RedesignedDashboardProps> = ({
         onClose={() => setIsExportOpen(false)}
         samples={samples}
         onExport={handleExportConfig}
+        baselineFilename={baselineFile?.name}
       />
 
       <WeightConfigModal

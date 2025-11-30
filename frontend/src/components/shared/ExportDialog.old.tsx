@@ -38,11 +38,25 @@ interface Props {
 }
 
 const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) => {
+  // Get default filename from baseline (remove extension)
+  const defaultZipName = baseline?.filename 
+    ? baseline.filename.replace(/\.[^/.]+$/, '') 
+    : 'exported_graphs';
+
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
   const [selectedSamples, setSelectedSamples] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const [zipFilename, setZipFilename] = useState(defaultZipName);
   const toast = useToast();
+
+  // Update zip filename when baseline changes or modal opens
+  React.useEffect(() => {
+    if (isOpen && baseline) {
+      const newDefaultName = baseline.filename.replace(/\.[^/.]+$/, '');
+      setZipFilename(newDefaultName);
+    }
+  }, [isOpen, baseline]);
 
   const filteredSamples = samples.filter(sample => 
     sample.filename.toLowerCase().includes(searchTerm.toLowerCase())
@@ -99,6 +113,11 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
 
       // Add format info
       formData.append('format', format);
+      
+      // Add zip filename
+      if (zipFilename.trim()) {
+        formData.append('zip_filename', zipFilename.trim());
+      }
 
       const response = await fetch('http://localhost:8080/generate_graphs', {
         method: 'POST',
@@ -110,7 +129,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
       }
 
       const blob = await response.blob();
-      const filename = `exported_graphs_${format}.zip`;
+      const filename = (zipFilename.trim() || defaultZipName) + '.zip';
       
       // Use folder picker if requested and supported, otherwise fallback
       const result = await exportBlob(blob, filename, useFolderPicker);
@@ -161,6 +180,7 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
     setFormat('png');
     setSelectedSamples([]);
     setSearchTerm('');
+    setZipFilename(defaultZipName);
   };
 
   return (
@@ -180,6 +200,33 @@ const ExportDialog: React.FC<Props> = ({ isOpen, onClose, baseline, samples }) =
                   <Radio value="jpeg">JPEG</Radio>
                 </HStack>
               </RadioGroup>
+            </Box>
+
+            {/* Filename Input */}
+            <Box w="100%">
+              <Text fontWeight="semibold" mb={2}>Export Filename</Text>
+              <InputGroup>
+                <Input
+                  value={zipFilename}
+                  onChange={(e) => setZipFilename(e.target.value)}
+                  placeholder={defaultZipName}
+                  pr="50px"
+                />
+                <Box
+                  position="absolute"
+                  right="12px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                  pointerEvents="none"
+                  color="gray.400"
+                  fontSize="sm"
+                >
+                  .zip
+                </Box>
+              </InputGroup>
+              <Text fontSize="xs" color="gray.500" mt={1}>
+                Default: {defaultZipName}.zip
+              </Text>
             </Box>
 
             {/* Download Info */}
