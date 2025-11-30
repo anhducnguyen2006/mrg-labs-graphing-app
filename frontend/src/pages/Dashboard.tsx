@@ -14,8 +14,8 @@ import {
 } from '@chakra-ui/react';
 import FileUploadBox from '../components/dashboard/FileUploadBox';
 import GraphPreview from '../components/dashboard/GraphPreview';
-import SampleSidebar from '../components/shared/SampleSidebar.old';
-import ExportDialog from '../components/shared/ExportDialog.old';
+import SampleSidebar from '../components/shared/SampleSidebar';
+import ExportDialog from '../components/shared/ExportDialog';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import ChangePasswordDialog from '../components/auth/ChangePasswordDialog';
 import AbnormalityWeightDialog from '../components/dashboard/AbnormalityWeightDialog';

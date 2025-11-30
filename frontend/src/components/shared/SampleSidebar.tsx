@@ -23,9 +23,8 @@ import {
 } from '@chakra-ui/react';
 import { SearchIcon, SmallCloseIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { FiHeart, FiArrowUp, FiArrowDown } from 'react-icons/fi';
-import { FaHeart, FaSortAlphaDown, FaSortAlphaUp, FaHeart as FaHeartFilled, FaSortNumericDown, FaSortNumericUp } from 'react-icons/fa';
+import { FaSortAlphaDown, FaSortAlphaUp, FaHeart, FaHeart as FaHeartFilled, FaSortNumericDown, FaSortNumericUp } from 'react-icons/fa';
 import { ParsedCSV } from '../../types';
-import CriticalSamplesAlert from '../samples/CriticalSamplesAlert';
 
 interface Props {
   samples: ParsedCSV[];
@@ -50,6 +49,12 @@ const SampleSidebar: React.FC<Props> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
+
+  // Calculate critical samples count
+  const criticalCount = samples.filter(s => {
+    const score = sampleScores[s.filename];
+    return score !== undefined && score < 70;
+  }).length;
 
   // Collapsible controls
   const { isOpen: isAlertsOpen, onToggle: onToggleAlerts } = useDisclosure({ defaultIsOpen: true });
@@ -174,10 +179,12 @@ const SampleSidebar: React.FC<Props> = ({
             />
           </HStack>
           <Collapse in={isAlertsOpen} animateOpacity>
-            <CriticalSamplesAlert 
-              sampleScores={sampleScores}
-              onSampleSelect={onSelectSample}
-            />
+            <Box p={3} bg="red.50" borderRadius="md">
+              <Text fontSize="sm" color="red.800">
+                {criticalCount > 0 && `⚠️ ${criticalCount} critical sample${criticalCount > 1 ? 's' : ''} detected`}
+                {criticalCount === 0 && '✓ No critical samples'}
+              </Text>
+            </Box>
           </Collapse>
         </Box>
 
